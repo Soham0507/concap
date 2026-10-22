@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integrations · Concap AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/auth.js"></script>
+  <script src="/static/appnav.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand" style="margin-bottom:24px;">
+        <div class="concap-logo">
+          <div class="concap-logo-mark"></div>
+          Concap AI
+        </div>
+      </div>
+
+      <div class="nav-section">Insights</div>
+      <a class="nav-item" href="/dashboard"><span class="icon">◧</span> Dashboard</a>
+      <a class="nav-item" href="/conversations"><span class="icon">▤</span> Conversations</a>
+      <a class="nav-item" href="/transcribe"><span class="icon">✎</span> Quick transcribe</a>
+
+      <div class="nav-section">CRM</div>
+      <a class="nav-item" href="/scan"><span class="icon">⧈</span> Scan card</a>
+      <a class="nav-item" href="/companies"><span class="icon">▦</span> Companies</a>
+      <a class="nav-item" href="/contacts"><span class="icon">◰</span> Contacts</a>
+
+      <div class="nav-section">Settings</div>
+      <a class="nav-item active" href="/integrations"><span class="icon">⚡</span> Integrations</a>
+
+      <div class="footer">
+        <div class="row" style="margin-bottom: 10px;">
+          <span class="dot"></span>
+          <span>local server</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h1 style="margin:0;">Integrations</h1>
+          <p class="muted" style="margin:6px 0 0;">Connect Concap AI to the systems you already live in.</p>
+        </div>
+      </div>
+
+      <div id="hs-banner" style="display:none; max-width:820px; margin-bottom:16px; padding:12px 14px; border-radius:8px; font-size:14px;"></div>
+
+      <div class="card" style="max-width: 820px;">
+        <div class="integration-head">
+          <div class="integration-icon" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#ff8a6b,#ff5b2e); color:white; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; box-shadow:0 4px 12px rgba(255,91,46,.32);">H</div>
+          <div class="integration-head-text">
+            <h2 style="margin:0;">HubSpot</h2>
+            <div class="muted" id="hs-tagline">Sync contacts, companies, notes, and deals.</div>
+          </div>
+          <div id="hs-pill" class="pill" style="padding:6px 12px; border-radius:999px; font-size:13px;">Checking…</div>
+        </div>
+
+        <div id="hs-detail" class="muted" style="margin-bottom:18px;"></div>
+
+        <!-- Not connected: OAuth connect -->
+        <div id="hs-setup" style="display:none;">
+          <div id="hs-nudge" style="display:none; margin-bottom:16px; padding:12px 14px; border-radius:8px; background:rgba(234,179,8,.10); border:1px solid rgba(234,179,8,.30); color:#b45309;">
+            <strong>Connect your own HubSpot portal.</strong> Concap no longer uses a shared HubSpot
+            account — each workspace syncs into its own portal. An owner or admin can connect it below so
+            your conversations land in <em>your</em> CRM, isolated from every other workspace.
+          </div>
+          <p style="line-height:1.7; margin-top:0;">
+            Connect your HubSpot account in one click. You'll be sent to HubSpot to approve access, then
+            brought right back here. Concap requests only the CRM scopes it needs:
+          </p>
+          <div style="background: var(--surface-alt); border:1px solid var(--border); padding:10px 14px; border-radius:8px; font-family: ui-monospace, monospace; font-size:13px; margin:6px 0 16px; color:var(--text);">
+            crm.objects.contacts.read &nbsp; crm.objects.contacts.write<br/>
+            crm.objects.companies.read &nbsp; crm.objects.companies.write<br/>
+            crm.objects.deals.read &nbsp; crm.objects.deals.write<br/>
+            crm.schemas.contacts.read &nbsp; crm.schemas.companies.read &nbsp; crm.schemas.deals.read<br/>
+            crm.objects.owners.read &nbsp; oauth
+          </div>
+
+          <div id="hs-not-configured" style="display:none; margin-bottom:14px; padding:12px 14px; border-radius:8px; background:rgba(234,179,8,.10); border:1px solid rgba(234,179,8,.30); color:#b45309;">
+            HubSpot connection isn't set up on this server yet. An administrator needs to configure the
+            HubSpot OAuth app (<code>HUBSPOT_CLIENT_ID</code>, <code>HUBSPOT_CLIENT_SECRET</code>,
+            <code>PUBLIC_BASE_URL</code>) before you can connect.
+          </div>
+
+          <div class="button-row">
+            <button id="hs-connect-btn">Connect HubSpot</button>
+          </div>
+          <p class="muted" style="margin-top:14px;">
+            We never see your HubSpot password. Access is granted by OAuth and you can revoke it at any time
+            from HubSpot's connected-apps settings or by clicking Disconnect here.
+          </p>
+        </div>
+
+        <!-- Connected -->
+        <div id="hs-connected" style="display:none;">
+          <div class="table-scroll">
+            <table style="width:100%; border-collapse: collapse;" class="kv">
+              <tbody id="hs-info"></tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:24px;">Sync behavior</h3>
+          <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:6px;">
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-auto-sync-toggle" style="margin-top:3px;" />
+              <span><strong>Auto-sync</strong> — every analyzed conversation is pushed to HubSpot in the background.</span>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-create-deals-toggle" style="margin-top:3px;" />
+              <span><strong>Create deals</strong> — a deal is created in the default pipeline, with stage mapped from lead temperature (hot → Qualified to buy, warm/cold → Appointment scheduled).</span>
+            </label>
+          </div>
+
+          <h4 style="margin:22px 0 8px;">What gets synced</h4>
+          <p class="muted" style="margin:0 0 12px;">Fine-tune which parts of each conversation are pushed to HubSpot.</p>
+          <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:6px;">
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-sync-contacts-toggle" style="margin-top:3px;" />
+              <span><strong>Contacts</strong> — create/update the visitor as a HubSpot contact (matched by email then phone).</span>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-sync-companies-toggle" style="margin-top:3px;" />
+              <span><strong>Companies</strong> — create/update the company (matched by domain then name) and link the contact.</span>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-sync-notes-toggle" style="margin-top:3px;" />
+              <span><strong>Notes</strong> — attach an AI summary note (intent, pain points, key quotes) to the contact and company.</span>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-sync-transcript-toggle" style="margin-top:3px;" />
+              <span><strong>Transcript in note</strong> — include the full conversation transcript in the note body.</span>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-sync-tasks-toggle" style="margin-top:3px;" />
+              <span><strong>Tasks</strong> — create a HubSpot Task for each action item / recommended next step, assigned to the contact.</span>
+            </label>
+            <div id="hs-owner-row" style="margin:2px 0 0 28px; max-width:420px;">
+              <label for="hs-owner-select" style="display:block; font-weight:600; margin-bottom:4px;">Assign synced tasks to</label>
+              <select id="hs-owner-select" style="width:100%; padding:8px 10px; border-radius:8px;">
+                <option value="">Unassigned (HubSpot default)</option>
+              </select>
+              <p class="muted" id="hs-owner-hint" style="margin:6px 0 0; font-size:13px;">Pick the HubSpot user that follow-up tasks are routed to.</p>
+            </div>
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="hs-sync-insights-toggle" style="margin-top:3px;" />
+              <span><strong>AI insights</strong> — write lead score, quality, sentiment, intent, urgency, budget and buying role to custom <em>Concap AI</em> contact properties (auto-created in your portal).</span>
+            </label>
+          </div>
+          <p class="muted" id="hs-settings-note" style="margin:4px 0 0; display:none;">Only an owner or admin can change these settings.</p>
+          <ul style="line-height:1.8; margin-top:14px;">
+            <li><strong>Dedup:</strong> Contacts are matched by email then phone. Companies are matched by domain then name. Re-syncing updates the existing record instead of creating duplicates.</li>
+            <li><strong>Idempotent:</strong> Tasks and notes are tracked per conversation, so re-syncing adds only newly-found action items instead of duplicating existing ones.</li>
+          </ul>
+
+          <p class="muted" id="hs-last-sync" style="margin:14px 0 0; display:none;"></p>
+
+          <div class="button-row" style="margin-top:18px;">
+            <button class="secondary" id="hs-sync-now">Sync now</button>
+            <button class="secondary" id="hs-refresh">Refresh status</button>
+            <a class="secondary" id="hs-open-portal" target="_blank" rel="noopener" style="display:none;">Open HubSpot portal ↗</a>
+            <button class="danger" id="hs-disconnect" style="margin-left:auto;">Disconnect</button>
+          </div>
+        </div>
+
+        <!-- OAuth connection expired: reconnect via OAuth -->
+        <div id="hs-needs-reconnect" style="display:none;">
+          <p>
+            Your HubSpot connection has <strong>expired</strong> and could not be refreshed automatically.
+            Reconnect to resume syncing conversations.
+          </p>
+          <div class="button-row" style="margin-top:14px;">
+            <button id="hs-reconnect-oauth">Reconnect HubSpot</button>
+          </div>
+        </div>
+
+        <div id="hs-error" style="display:none; margin-top:18px; padding:12px 14px; border-radius:8px; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); color:#ef4444;"></div>
+      </div>
+
+      <!-- Salesforce — per-ORG OAuth connection -->
+      <div id="sf-banner" style="display:none; max-width:820px; margin:20px 0 16px; padding:12px 14px; border-radius:8px; font-size:14px;"></div>
+
+      <div class="card" style="max-width: 820px; margin-top:20px;">
+        <div class="integration-head">
+          <div class="integration-icon" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#3aa4e0,#00a1e0); color:white; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; box-shadow:0 4px 12px rgba(0,161,224,.32);">S</div>
+          <div class="integration-head-text">
+            <h2 style="margin:0;">Salesforce</h2>
+            <div class="muted" id="sf-tagline">Sync contacts, accounts, notes, and opportunities.</div>
+          </div>
+          <div id="sf-pill" class="pill" style="padding:6px 12px; border-radius:999px; font-size:13px;">Checking…</div>
+        </div>
+
+        <div id="sf-detail" class="muted" style="margin-bottom:18px;"></div>
+
+        <!-- Not connected: OAuth connect -->
+        <div id="sf-setup" style="display:none;">
+          <div id="sf-nudge" style="display:none; margin-bottom:16px; padding:12px 14px; border-radius:8px; background:rgba(234,179,8,.10); border:1px solid rgba(234,179,8,.30); color:#b45309;">
+            <strong>Connect your own Salesforce org.</strong> Each workspace syncs into its own
+            Salesforce org. An owner or admin can connect it below so your conversations land in
+            <em>your</em> CRM, isolated from every other workspace.
+          </div>
+          <p style="line-height:1.7; margin-top:0;">
+            Connect your Salesforce account in one click. You'll be sent to Salesforce to approve access,
+            then brought right back here. Concap requests only the scopes it needs:
+          </p>
+          <div style="background: var(--surface-alt); border:1px solid var(--border); padding:10px 14px; border-radius:8px; font-family: ui-monospace, monospace; font-size:13px; margin:6px 0 16px; color:var(--text);">
+            api &nbsp; refresh_token
+          </div>
+
+          <div id="sf-not-configured" style="display:none; margin-bottom:14px; padding:12px 14px; border-radius:8px; background:rgba(234,179,8,.10); border:1px solid rgba(234,179,8,.30); color:#b45309;">
+            Salesforce connection isn't set up on this server yet. An administrator needs to configure the
+            Salesforce connected app (<code>SALESFORCE_CLIENT_ID</code>, <code>SALESFORCE_CLIENT_SECRET</code>,
+            <code>PUBLIC_BASE_URL</code>) before you can connect.
+          </div>
+
+          <div class="button-row">
+            <button id="sf-connect-btn">Connect Salesforce</button>
+          </div>
+          <p class="muted" style="margin-top:14px;">
+            We never see your Salesforce password. Access is granted by OAuth and you can revoke it at any time
+            from Salesforce's connected-apps settings or by clicking Disconnect here.
+          </p>
+        </div>
+
+        <!-- Connected -->
+        <div id="sf-connected" style="display:none;">
+          <div class="table-scroll">
+            <table style="width:100%; border-collapse: collapse;" class="kv">
+              <tbody id="sf-info"></tbody>
+            </table>
+          </div>
+
+          <h3 style="margin-top:24px;">Sync behavior</h3>
+          <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:6px;">
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="sf-auto-sync-toggle" style="margin-top:3px;" />
+              <span><strong>Auto-sync</strong> — every analyzed conversation is pushed to Salesforce in the background.</span>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+              <input type="checkbox" id="sf-create-opps-toggle" style="margin-top:3px;" />
+              <span><strong>Create opportunities</strong> — an opportunity is created with stage mapped from lead temperature (hot → Qualification, warm/cold → Prospecting).</span>
+            </label>
+          </div>
+          <p class="muted" id="sf-settings-note" style="margin:4px 0 0; display:none;">Only an owner or admin can change these settings.</p>
+          <ul style="line-height:1.8; margin-top:14px;">
+            <li><strong>Dedup:</strong> Contacts are matched by email then phone. Accounts are matched by domain then name. Re-syncing updates the existing record instead of creating duplicates.</li>
+            <li><strong>Notes:</strong> The full transcript, AI summary, intent, pain points, action items, and key quotes are attached as a Salesforce note on the contact.</li>
+          </ul>
+
+          <div class="button-row" style="margin-top:18px;">
+            <button class="secondary" id="sf-refresh">Refresh status</button>
+            <a class="secondary" id="sf-open-org" target="_blank" rel="noopener" style="display:none;">Open Salesforce ↗</a>
+            <button class="danger" id="sf-disconnect" style="margin-left:auto;">Disconnect</button>
+          </div>
+        </div>
+
+        <!-- OAuth connection expired: reconnect via OAuth -->
+        <div id="sf-needs-reconnect" style="display:none;">
+          <p>
+            Your Salesforce connection has <strong>expired</strong> and could not be refreshed automatically.
+            Reconnect to resume syncing conversations.
+          </p>
+          <div class="button-row" style="margin-top:14px;">
+            <button id="sf-reconnect-oauth">Reconnect Salesforce</button>
+          </div>
+        </div>
+
+        <div id="sf-error" style="display:none; margin-top:18px; padding:12px 14px; border-radius:8px; background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); color:#ef4444;"></div>
+      </div>
+
+      <!-- Plaud (voice recorder) — per-USER connection -->
+      <div class="card" style="max-width: 820px; margin-top:20px;">
+        <div class="integration-head">
+          <div class="integration-icon" style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#6b8aff,#2e5bff); color:white; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; box-shadow:0 4px 12px rgba(46,91,255,.32);">P</div>
+          <div class="integration-head-text">
+            <h2 style="margin:0;">Plaud</h2>
+            <div class="muted">View your Plaud transcripts and summaries on this site.</div>
+          </div>
+          <div id="plaud-pill" class="pill" style="padding:6px 12px; border-radius:999px; font-size:13px;">Checking…</div>
+        </div>
+
+        <div id="plaud-detail" class="muted" style="margin-bottom:18px;"></div>
+
+        <div id="plaud-signin-required" style="display:none;">
+          <button id="plaud-sign-in-btn" type="button">Sign in to connect Plaud</button>
+        </div>
+
+        <!-- Not connected: OAuth connect -->
+        <div id="plaud-setup" style="display:none;">
+          <p style="line-height:1.7; margin-top:0;">
+            Connect your own Plaud account in one click. You'll approve access on Plaud, then come right back.
+            Read your existing transcripts and summaries here in Concap—no mobile companion needed.
+            Each user connects their own Plaud account. Imported recordings are also visible within your site workspace.
+          </p>
+          <div id="plaud-not-configured" style="display:none; margin-bottom:14px; padding:12px 14px; border-radius:8px; background:rgba(234,179,8,.10); border:1px solid rgba(234,179,8,.30); color:#b45309;">
+            Plaud isn't set up on this server yet. An administrator needs to configure
+            <code>PUBLIC_BASE_URL</code> before you can connect.
+            Account authorization registers automatically when supported by Plaud.
+            Embedded Developer Portal keys are separate and are not needed here.
+          </div>
+          <div class="button-row">
+            <button id="plaud-connect-btn">Connect Plaud</button>
+          </div>
+          <p class="muted" style="margin-top:14px;">
+            We never see your Plaud password. Access is granted by OAuth and you can disconnect at any time.
+          </p>
+        </div>
+
+        <!-- Connected -->
+        <div id="plaud-connected" style="display:none;">
+          <div class="table-scroll">
+            <table style="width:100%; border-collapse: collapse;" class="kv">
+              <tbody id="plaud-info"></tbody>
+            </table>
+          </div>
+          <ul style="line-height:1.8; margin-top:14px;">
+            <li><strong>What syncs:</strong> Each recording's transcript and Plaud's AI summary appear on this site in Conversations and Meeting Intelligence.</li>
+            <li><strong>Dedup:</strong> Recordings already imported are skipped, so syncing again only pulls new ones.</li>
+          </ul>
+          <div id="plaud-sync-result" class="muted" style="display:none; margin:8px 0; padding:10px 12px; border-radius:8px; background:var(--surface-alt); border:1px solid var(--border);"></div>
+          <div class="button-row" style="margin-top:18px;">
+            <button id="plaud-sync">Sync recordings</button>
+            <a class="secondary" href="/conversations">Open Conversations ↗</a>
+            <a class="secondary" href="/meetings">Open Meetings ↗</a>
+            <button class="danger" id="plaud-disconnect" style="margin-left:auto;">Disconnect</button>
+          </div>
+        </div>
+
+        <!-- OAuth connection expired: reconnect via OAuth -->
+        <div id="plaud-needs-reconnect" style="display:none;">
+          <p>Your Plaud connection has <strong>expired</strong> and could not be refreshed automatically. Reconnect to resume syncing recordings.</p>
+          <div class="button-row" style="margin-top:14px;">
+            <button id="plaud-reconnect-oauth">Reconnect Plaud</button>
+          </div>
+        </div>
+
+        <div id="plaud-error" role="alert" style="display:none; margin-top:18px; padding:12px 14px; border-radius:8px; background:var(--danger-soft); border:1px solid var(--danger); color:var(--danger);"></div>
+        <section id="plaud-library" aria-labelledby="plaud-library-title" style="display:none; margin-top:24px; border-top:1px solid var(--border); padding-top:20px;">
+          <h3 id="plaud-library-title">Your Plaud recordings</h3>
+          <p class="muted">Read imported transcripts and summaries below. Use Sync recordings to bring in new Plaud data. Imported copies remain available if you disconnect.</p>
+          <div class="button-row">
+            <button id="plaud-library-refresh" type="button" class="secondary">Refresh list</button>
+          </div>
+          <p id="plaud-library-status" class="muted" role="status" aria-live="polite"></p>
+          <div id="plaud-library-items"></div>
+          <div class="button-row" style="margin-top:12px;">
+            <button id="plaud-library-prev" type="button" class="secondary" disabled>Previous</button>
+            <button id="plaud-library-next" type="button" class="secondary" disabled>Next</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/integrations.js"></script>
+</body>
+</html>

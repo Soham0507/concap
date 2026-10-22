@@ -1,0 +1,214 @@
+Analyze our application and verify whether it fully supports the following AI-powered Expo CRM workflow and requirements.
+Product Goal:
+Our application is an AI-powered Expo CRM and Meeting Intelligence platform where users can:
+
+
+Record expo/business discussions
+
+Scan visitor ID cards, QR codes, badges, or business cards
+
+Automatically fetch company and contact person details
+
+Save transcripts linked to those contacts and companies
+
+Manage leads and follow-ups inside the application
+Please check the application architecture, backend, frontend, APIs, database structure, UI flow, and feature implementation against these requirements.
+Core Workflow:
+User attends expo
+→ Starts meeting recording
+→ Scans QR/business card/ID badge
+→ OCR extracts company + person details
+→ AI structures extracted information
+→ Transcript is generated and linked
+→ Data saved automatically in CRM
+→ User can manage leads later
+Required Features Checklist:
+
+
+Recording & Transcript Module
+
+
+Audio recording support
+
+Transcript generation
+
+Save transcript to database
+
+Link transcript to contact/company
+
+Transcript history
+
+Meeting notes support
+
+
+QR / OCR Scanner Module
+
+
+QR code scanning
+
+Business card scanning
+
+ID badge scanning
+
+Google Cloud Vision OCR integration
+
+Text extraction accuracy
+
+Automatic field detection
+
+
+AI Data Extraction
+System should automatically identify:
+
+
+Company Name
+
+Contact Person Name
+
+Designation
+
+Email
+
+Phone Number
+
+Website
+
+Address
+
+Industry
+
+
+CRM Module
+
+
+Store Companies
+
+Store Contact Persons
+
+Link contacts to companies
+
+View company profiles
+
+View contact profiles
+
+Edit/Delete records
+
+Search and filter
+
+Scan history
+
+Manual add customer/contact
+
+
+Transcript Linking
+
+
+Each transcript should be connected to:
+
+
+Company
+
+Contact person
+
+Meeting date
+
+Users should be able to open a contact and view all related meetings/transcripts
+
+
+AI Intelligence Features
+
+
+AI meeting summary
+
+AI action items
+
+AI follow-up suggestions
+
+Lead scoring
+
+Important keyword detection
+
+
+Backend & Database
+Check whether backend supports:
+
+
+OCR processing
+
+Secure API handling
+
+Transcript storage
+
+File uploads
+
+Real-time updates
+
+Structured CRM relationships
+
+
+UI/UX Validation
+Check if UI is:
+
+
+Professional
+
+Fast and responsive
+
+Easy to use during expos
+
+Optimized for quick scanning and recording
+
+Mobile friendly
+
+Smooth workflow between scanning and recording
+
+
+Security & Production Readiness
+
+
+Secure Cloud Vision API handling
+
+API keys protected
+
+Authentication implemented
+
+Database security
+
+Error handling
+
+Loading states
+
+Scalability support
+
+
+Missing Features Analysis
+Identify:
+
+
+Missing features
+
+Weak architecture areas
+
+UX problems
+
+Performance bottlenecks
+
+Database relationship issues
+
+Security concerns
+
+Recommended improvements
+Finally provide:
+
+
+Overall readiness score
+
+MVP readiness status
+
+Production readiness status
+
+Recommended next features
+
+Priority improvements
+
+Suggested scalable architecture

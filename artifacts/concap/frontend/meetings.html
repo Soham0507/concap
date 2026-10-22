@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meetings — Concap AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/auth.js"></script>
+  <script src="/static/appnav.js"></script>
+  <script src="/static/voice-reminder.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+  <style>
+    .concap-logo { display:flex; align-items:center; gap:10px; font-family:'Fraunces', serif; font-size:22px; font-weight:400; letter-spacing:-0.02em; font-style:italic; color:#fff; }
+    .concap-logo-mark { width:26px; height:26px; position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .concap-logo-mark::before { content:''; position:absolute; inset:0; border:1.5px solid #FF5B2E; border-radius:50%; }
+    .concap-logo-mark::after { content:''; width:8px; height:8px; background:#FF5B2E; border-radius:50%; animation:concapPulse 2.2s ease-in-out infinite; }
+    @keyframes concapPulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.7);} }
+
+    .mtg-layout { display:grid; grid-template-columns: minmax(300px, 360px) 1fr; gap:18px; align-items:start; }
+    @media (max-width: 1040px) { .mtg-layout { grid-template-columns:1fr; } }
+
+    /* Intake card */
+    .intake-tabs { display:flex; gap:6px; margin-bottom:14px; }
+    .intake-tab { flex:1; padding:9px 12px; text-align:center; border:1px solid var(--border); background:var(--surface-alt); color:var(--text-muted); border-radius:9px; cursor:pointer; font-size:13px; font-weight:500; transition: all .14s ease; }
+    .intake-tab.active { background:var(--accent-soft); color:var(--accent-soft-text); border-color:var(--accent); }
+    .intake-pane { display:none; }
+    .intake-pane.active { display:block; }
+    .field { margin-bottom:12px; }
+    .field label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; margin-bottom:6px; }
+    .field input, .field select, .field textarea { width:100%; padding:9px 12px; }
+    .field textarea { min-height:150px; resize:vertical; font-family:inherit; line-height:1.5; }
+    .field-row { display:flex; gap:10px; }
+    @media (max-width:520px) { .field-row { flex-direction:column; } }
+    .field-row > .field { flex:1; }
+    .dropzone { border:1.5px dashed var(--border); border-radius:12px; padding:26px 16px; text-align:center; color:var(--text-muted); cursor:pointer; transition: border-color .15s ease, background .15s ease; }
+    .dropzone:hover, .dropzone.drag { border-color:var(--accent); background:var(--accent-soft); }
+    .dropzone .dz-ic { font-size:30px; opacity:.5; display:block; margin-bottom:8px; }
+    .dz-files { list-style:none; padding:0; margin:12px 0 0; display:flex; flex-direction:column; gap:6px; text-align:left; }
+    .dz-files li { display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:8px 10px; background:var(--surface-alt); border:1px solid var(--border); border-radius:8px; }
+    .dz-files li .rm { color:var(--text-subtle); cursor:pointer; }
+
+    /* Batch list */
+    .batch-list-card { display:flex; flex-direction:column; max-height: calc(100vh - 160px); overflow:hidden; }
+    @media (max-width: 1040px) { .batch-list-card { max-height:none; } }
+    .batch-list { overflow-y:auto; flex:1; }
+    .batch-row { display:flex; flex-direction:column; gap:5px; padding:13px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition: background .14s ease; }
+    .batch-row:hover { background:var(--surface-hover); }
+    .batch-row.selected { background:var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+    .batch-row .br-top { display:flex; justify-content:space-between; gap:10px; align-items:baseline; }
+    .batch-row .br-label { font-weight:500; font-size:14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .batch-row .br-when { font-size:11px; color:var(--text-subtle); }
+    .batch-row .br-meta { font-size:12px; color:var(--text-muted); }
+
+    /* Progress bar */
+    .progress { height:6px; border-radius:4px; background:var(--surface-alt); overflow:hidden; }
+    .progress > span { display:block; height:100%; background:var(--accent); transition: width .4s ease; }
+
+    /* Status pills */
+    .pill { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; text-transform:capitalize; }
+    .pill.queued, .pill.running, .pill.processing { background:rgba(234,179,8,.16); color:#b88407; }
+    .pill.completed { background:rgba(34,197,94,.16); color:#15803d; }
+    .pill.failed { background:rgba(239,68,68,.16); color:#dc2626; }
+    [data-theme="light"] .pill.queued, [data-theme="light"] .pill.running, [data-theme="light"] .pill.processing { color:#92660a; }
+
+    /* Detail */
+    .mtg-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; padding:70px 24px; color:var(--text-muted); }
+    .mtg-empty-ic { font-size:34px; opacity:.5; }
+    .detail-head { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; margin-bottom:6px; }
+    .detail-head h2 { margin:0; flex:1; min-width:180px; }
+    .detail-sub { color:var(--text-muted); font-size:13px; margin-bottom:16px; }
+
+    .seg { display:flex; gap:6px; margin-bottom:18px; border-bottom:1px solid var(--border); }
+    .seg button { padding:9px 14px; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-muted); cursor:pointer; font-size:13px; font-weight:500; margin-bottom:-1px; }
+    .seg button.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+    .summary-card { background:var(--surface-alt); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px; }
+    .summary-card h3 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+    .agg-item { padding:11px 0; border-bottom:1px solid var(--border); }
+    .agg-item:last-child { border-bottom:none; }
+    .agg-item .agg-text { font-size:14px; line-height:1.5; color:var(--text); }
+    .agg-item .agg-task { font-weight:500; }
+    .agg-meta { font-size:12px; color:var(--text-muted); margin-top:3px; display:flex; flex-wrap:wrap; gap:6px 12px; }
+    .quote { border-left:3px solid var(--accent); background:var(--accent-soft); padding:7px 11px; border-radius:0 8px 8px 0; font-size:12.5px; color:var(--text); margin-top:7px; font-style:italic; }
+    .quote .q-src { display:block; font-style:normal; font-size:11px; color:var(--text-muted); margin-top:4px; }
+    .src-count { font-size:11px; font-weight:600; color:var(--accent-soft-text); background:var(--accent-soft); padding:2px 8px; border-radius:999px; }
+
+    /* Document list */
+    .doc-item { border:1px solid var(--border); border-radius:11px; margin-bottom:10px; overflow:hidden; }
+    .doc-head { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:13px 15px; cursor:pointer; background:var(--surface-alt); }
+    .doc-head:hover { background:var(--surface-hover); }
+    .doc-head .dh-title { font-weight:500; font-size:14px; }
+    .doc-head .dh-sub { font-size:12px; color:var(--text-muted); margin-top:2px; }
+    .doc-body { padding:15px; border-top:1px solid var(--border); display:none; }
+    .doc-body.open { display:block; }
+    .mom { font-size:14px; line-height:1.6; }
+    .mom h1, .mom h2, .mom h3 { font-family:'Fraunces', serif; font-style:italic; }
+    .mom h1 { font-size:22px; margin:0 0 12px; }
+    .mom h2 { font-size:17px; margin:18px 0 8px; }
+    .mom ul { padding-left:20px; margin:6px 0; }
+    .mom li { margin:4px 0; }
+    .mom table { width:100%; border-collapse:collapse; margin:8px 0; font-size:13px; }
+    .mom th, .mom td { border:1px solid var(--border); padding:7px 9px; text-align:left; }
+    .mom blockquote { border-left:3px solid var(--accent); margin:8px 0; padding:4px 12px; color:var(--text-muted); font-style:italic; }
+    .err-box { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#dc2626; padding:10px 12px; border-radius:9px; font-size:13px; }
+
+    .btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:11px 18px; border-radius:10px; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.2); z-index:200; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+    .toast.show { opacity:1; }
+    .hidden { display:none !important; }
+    .muted { color:var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand" style="margin-bottom:24px;">
+        <div class="concap-logo"><div class="concap-logo-mark"></div>Concap AI</div>
+      </div>
+      <div class="nav-section">Insights</div>
+      <a class="nav-item" href="/dashboard"><span class="icon">◧</span> Dashboard</a>
+      <a class="nav-item" href="/transcribe"><span class="icon">✎</span> Quick transcribe</a>
+      <div class="nav-section">CRM</div>
+      <a class="nav-item" href="/scan"><span class="icon">⧈</span> Scan card</a>
+      <a class="nav-item" href="/companies"><span class="icon">▦</span> Companies</a>
+      <a class="nav-item" href="/contacts"><span class="icon">◰</span> Contacts</a>
+
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" href="/integrations"><span class="icon">⚡</span> Integrations</a>
+
+      <div class="footer">
+        <div class="row" style="margin-bottom:10px;"><span class="dot"></span><span id="org-name">—</span></div>
+        <div class="account"><span class="avatar">@</span><span class="email" id="auth-email">—</span></div>
+        <a class="logout" id="auth-logout">Sign out</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <nav class="meet-subtabs">
+          <a href="/all-meetings"><span>▤</span> All Meetings</a>
+          <a href="/meetings" class="active" aria-current="page"><span>◰</span> Meeting Intelligence</a>
+          <a href="/imported-meetings"><span>⇩</span> Imported &amp; Providers</a>
+        </nav>
+        <div class="page-header">
+          <div>
+            <h1>Meeting Intelligence</h1>
+            <div class="subtitle">Upload meeting transcripts or audio in bulk. Get structured minutes with evidence quotes, plus a combined cross-meeting summary.</div>
+          </div>
+        </div>
+
+        <div class="mtg-layout">
+          <!-- Left: intake + batch history -->
+          <div>
+            <section class="card" style="margin-bottom:18px;">
+              <div class="intake-tabs">
+                <div class="intake-tab active" data-tab="paste">Paste text</div>
+                <div class="intake-tab" data-tab="upload">Upload files</div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label for="m-source">Source</label>
+                  <input id="m-source" type="text" placeholder="e.g. Zoom, In-person" value="manual" />
+                </div>
+                <div class="field">
+                  <label for="m-project">Project (optional)</label>
+                  <input id="m-project" type="text" placeholder="Project name" />
+                </div>
+              </div>
+
+              <!-- Paste pane -->
+              <div class="intake-pane active" data-pane="paste">
+                <div class="field">
+                  <label for="m-text">Transcript</label>
+                  <textarea id="m-text" placeholder="Paste a meeting transcript here (min 20 characters)…"></textarea>
+                </div>
+                <button class="btn-primary" id="btn-process" type="button" style="width:100%;">Generate minutes</button>
+              </div>
+
+              <!-- Upload pane -->
+              <div class="intake-pane" data-pane="upload">
+                <div class="field">
+                  <label>Files (text or audio — one batch)</label>
+                  <div class="dropzone" id="dropzone">
+                    <span class="dz-ic">⬆</span>
+                    <span>Drop transcripts (.txt, .md, .vtt) or audio (.mp3, .m4a, .wav…) here, or click to browse.</span>
+                    <input id="file-input" type="file" multiple class="hidden"
+                           accept=".txt,.md,.vtt,.srt,.mp3,.m4a,.mp4,.wav,.webm,.ogg,.flac" />
+                  </div>
+                  <ul class="dz-files" id="dz-files"></ul>
+                </div>
+                <div class="field">
+                  <label for="m-label">Batch label (optional)</label>
+                  <input id="m-label" type="text" placeholder="e.g. Q3 client calls" />
+                </div>
+                <button class="btn-primary" id="btn-upload" type="button" style="width:100%;">Upload &amp; process batch</button>
+              </div>
+            </section>
+
+            <section class="card flush batch-list-card">
+              <div style="padding:14px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);">History</strong>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <button class="btn-ghost" id="btn-plaud-sync" type="button" style="padding:4px 10px; font-size:12px; display:none;">Sync Plaud</button>
+                  <button class="btn-ghost" id="btn-refresh" type="button" style="padding:4px 10px; font-size:12px;">Refresh</button>
+                </div>
+              </div>
+              <div class="batch-list" id="batch-list"></div>
+              <div style="padding:16px;" class="muted" id="batch-status">Loading…</div>
+            </section>
+          </div>
+
+          <!-- Right: detail -->
+          <section class="card" id="detail-card">
+            <div id="detail-empty" class="mtg-empty">
+              <div class="mtg-empty-ic">◰</div>
+              <p>Generate minutes from a transcript, or select a batch from history to view its summary and per-meeting minutes.</p>
+            </div>
+            <div id="detail-body" class="hidden"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/static/meetings.js"></script>
+</body>
+</html>

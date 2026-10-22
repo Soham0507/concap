@@ -1,0 +1,116 @@
+
+Implementation Prompt: HubSpot OAuth Connection ("Connect HubSpot" button)
+Context
+Concap AI is a FastAPI + SQLAlchemy backend with a static, no‑build frontend served from /static. It is multi‑tenant: all data is scoped to an Organization, and users belong to one org. The app captures booth conversations, runs an AI pipeline (transcribe → analyze), and syncs each analyzed conversation into HubSpot as a contact + company + note (+ optional deal).
+
+Goal of this work: Let each organization connect its own HubSpot account via a one‑click OAuth flow — a "Connect HubSpot" button that opens HubSpot, the user clicks Allow, and the app is connected with no manual token copy‑paste. Today there is only a single global token shared by all tenants; this replaces that with per‑org OAuth tokens that auto‑refresh.
+
+Existing code you must work with (DO NOT rewrite the sync logic — only change where the token comes from)
+backend/app/config.py — currently global: hubspot_access_token: str, hubspot_auto_sync: bool = True, hubspot_create_deals: bool = True.
+backend/app/services/hubspot.py — the sync engine. Key pieces:
+_token() reads the global setting; _client() builds an httpx.Client with Authorization: Bearer <token>; _request(method, path, ...) is the shared HTTP wrapper that maps errors into HubSpotError / HubSpotNotConfigured.
+sync_conversation(db, conversation_id) — public entry point: calls upsert_company, upsert_contact, associate_contact_to_company, create_or_update_note, upsert_deal, then stamps HubSpot ids onto our rows. This orchestration stays as‑is.
+sync_conversation_safe(...) — never‑raises background wrapper; persists failures to conversation.hubspot_sync_error.
+get_account_info() — calls GET /account-info/v3/details; used for the connected check + portal id.
+backend/app/routers/hubspot.py — GET /api/hubspot/status.
+backend/app/routers/conversations.py — POST /api/conversations/{id}/hubspot-sync (manual sync button used by the dashboard).
+backend/app/services/pipeline.py — _maybe_hubspot_sync() auto‑syncs after analysis, currently gated on the global hubspot_access_token + hubspot_auto_sync.
+backend/app/models.py — has the Organization model. HubSpot ids are already cached on rows: Visitor.hubspot_contact_id, Company.hubspot_company_id, Conversation.hubspot_note_id / hubspot_deal_id / hubspot_synced_at / hubspot_sync_error.
+Frontend: frontend/integrations.html + frontend/integrations.js — currently shows static setup instructions and a status pill from /api/hubspot/status. There is no connect button or token input.
+What OAuth changes vs. the current token
+The current Private App token never expires. OAuth access tokens expire (~30 min) and come with a refresh token used to mint new access tokens. So the app must store both tokens per org and auto‑refresh the access token before each use. Everything downstream of "obtain a valid token" is unchanged.
+
+The OAuth handshake to implement:
+
+1. User clicks "Connect HubSpot"  → app redirects to HubSpot authorize URL (with client_id, redirect_uri, scope, state)
+2. User logs in + clicks Allow      → HubSpot redirects back to our callback with ?code=&state=
+3. App exchanges code (+client secret) at HubSpot's token endpoint → access_token + refresh_token + expires_in
+4. App encrypts + stores both tokens on the Organization, fetches portal id, shows "Connected ✓"
+5. Before any sync: if access token is near expiry, refresh it using the refresh token
+One‑time HubSpot setup (document this in README.md)
+Create a HubSpot developer account → create a public app (not a Private App).
+Copy the app's Client ID and Client Secret → set as env vars HUBSPOT_CLIENT_ID, HUBSPOT_CLIENT_SECRET.
+Register the redirect URL: {BASE_URL}/api/hubspot/oauth/callback (add a BASE_URL/PUBLIC_BASE_URL setting; must match exactly).
+Configure the required scopes (same set the app already documents):
+crm.objects.contacts.read   crm.objects.contacts.write
+crm.objects.companies.read  crm.objects.companies.write
+crm.objects.deals.read      crm.objects.deals.write
+crm.schemas.contacts.read   crm.schemas.companies.read   crm.schemas.deals.read
+crm.objects.owners.read     oauth
+HubSpot endpoints to use:
+
+Authorize: https://app.hubspot.com/oauth/authorize
+Token exchange/refresh: https://api.hubapi.com/oauth/v1/token
+(Optional) token info / revoke under /oauth/v1/.
+Backend changes
+1. Config (config.py)
+Add: hubspot_client_id, hubspot_client_secret, public_base_url, and secret_encryption_key (for encrypting tokens at rest). Keep the existing global hubspot_access_token as an optional legacy fallback only.
+
+2. Schema — new Organization columns (+ migration)
+hubspot_access_token_enc (encrypted text, nullable)
+hubspot_refresh_token_enc (encrypted text, nullable)
+hubspot_token_expires_at (datetime, nullable)
+hubspot_portal_id (text, nullable)
+hubspot_connected_at (datetime, nullable)
+hubspot_needs_reconnect (bool, default false)
+hubspot_auto_sync (bool, default true)
+hubspot_create_deals (bool, default true)
+Provide an Alembic migration (or match the project's existing schema‑bootstrap pattern if it doesn't use Alembic).
+
+3. Encryption helper
+Add a small util using cryptography.fernet.Fernet keyed by secret_encryption_key: encrypt(plaintext) -> str, decrypt(ciphertext) -> str. All token columns are written/read through it. Plaintext tokens never touch the DB.
+
+4. Refactor services/hubspot.py to be token‑parameterized
+Change _client() / _request() to take an explicit access token (cleanest: introduce a lightweight HubSpotClient(token) with the existing functions as methods, or thread token: str through the call chain). Remove reliance on the global _token() for the sync path.
+sync_conversation(db, conversation_id) must:
+Resolve the organization that owns the conversation.
+Get a valid access token via get_valid_access_token(db, org) (below).
+Use that token for all upserts + get_account_info.
+Raise HubSpotNotConfigured if the org isn't connected.
+5. Token refresh helper — get_valid_access_token(db, org) -> str
+If the org has no tokens → raise HubSpotNotConfigured.
+If hubspot_token_expires_at is within a safety buffer (e.g. now + 5 min) → call the token endpoint with grant_type=refresh_token, client_id, client_secret, refresh_token; on success persist the new access token + new expires_at (HubSpot may also rotate the refresh token — persist it if returned).
+On a revoked/expired refresh token (HubSpot 400): clear the access/refresh tokens, set hubspot_needs_reconnect = true, and raise HubSpotNotConfigured so the UI prompts a reconnect.
+Concurrency: two background syncs for the same org could refresh simultaneously — acceptable to serialize per org (simple lock) or tolerate a redundant refresh. Document the choice.
+6. New endpoints (routers/hubspot.py)
+All require an authenticated user; writes restricted to org owner/admin.
+
+GET /api/hubspot/oauth/start
+Generate a CSRF state value bound to the user's org (signed token or short‑lived server‑side entry).
+302‑redirect to the HubSpot authorize URL with client_id, redirect_uri = {public_base_url}/api/hubspot/oauth/callback, scope, state.
+GET /api/hubspot/oauth/callback?code=&state=
+Validate state → resolve org (reject on mismatch/expiry → CSRF protection).
+Exchange code at the token endpoint (grant_type=authorization_code) for access_token, refresh_token, expires_in.
+Fetch portal id (get_account_info with the new token).
+Encrypt + store tokens, expires_at = now + expires_in, portal_id, hubspot_connected_at = now, clear hubspot_needs_reconnect.
+Redirect to /integrations?connected=1 (and ?error=... on failure).
+POST /api/hubspot/disconnect
+Clear all token columns; optionally call HubSpot's refresh‑token revoke endpoint.
+Update GET /api/hubspot/status to report the current org's state: { connected, needs_reconnect, portal, auto_sync, create_deals }. Never return tokens.
+PUT /api/hubspot/settings — body { auto_sync, create_deals } (per‑org toggles).
+7. Wire org into the callers
+pipeline.py::_maybe_hubspot_sync — gate on the conversation's org being connected + hubspot_auto_sync true. Wrap in sync_conversation_safe (keep "never crash the pipeline" behavior).
+routers/conversations.py::hubspot-sync — use the current user's org; if needs_reconnect/not connected, return a clear 4xx the dashboard can show.
+Frontend changes (integrations.html + integrations.js)
+Not connected: show a prominent "Connect HubSpot" button that navigates to /api/hubspot/oauth/start. Keep the existing scope/instructions as collapsible help.
+On return (/integrations?connected=1): call /api/hubspot/status; show "Connected ✓" + portal name + a Disconnect button.
+Needs reconnect (refresh token dead): show a warning state with a "Reconnect" button (same as connect).
+Toggles: Auto‑sync and Create deals, wired to PUT /api/hubspot/settings.
+Show ?error=... from the callback as an inline error message.
+Match the existing premium styling already in integrations.html.
+Security requirements (mandatory)
+Tokens encrypted at rest (Fernet); plaintext never stored or logged.
+Tokens never returned by any endpoint/JSON to the browser.
+state parameter validated on callback (CSRF); reject forged/mismatched/expired states.
+redirect_uri must exactly match the registered URL.
+Client secret only on the server, only in the token exchange/refresh calls.
+Restrict connect/disconnect/settings to org owner/admin.
+Acceptance criteria
+Clicking "Connect HubSpot" completes the Allow flow and lands back in a connected state with no manual token entry.
+Two different orgs can each connect their own portal; a conversation syncs only into its org's portal.
+A sync that runs after the access token's lifetime still succeeds — the access token auto‑refreshes with no user action.
+A revoked/expired refresh token flips the org to needs‑reconnect, the UI shows a Reconnect button, and syncs no‑op cleanly (no pipeline crash).
+Forged/mismatched state on the callback is rejected.
+Tokens are encrypted in the DB and never appear in any API response.
+Disconnect clears the connection; status flips to not connected.
+Existing sync/dedup/note/deal behavior is unchanged for a connected org.

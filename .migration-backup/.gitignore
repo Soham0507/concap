@@ -1,0 +1,40 @@
+# Environment & secrets
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data
+backend/data/
+data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local (machine-specific) settings
+.claude/settings.local.json
+
+# Never commit Google service-account / credential JSON files
+attached_assets/*.json
+*-service-account*.json
+gen-lang-client-*.json

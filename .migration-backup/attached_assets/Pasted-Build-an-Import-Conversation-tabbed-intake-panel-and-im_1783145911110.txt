@@ -1,0 +1,58 @@
+Build an "Import Conversation" tabbed intake panel, and implement its Audio tab.
+
+CONTEXT
+We're unifying all the ways a conversation/meeting can enter the system into one
+"Import Conversation" card with a single horizontal tab bar. The tabs are:
+  All · Manual · Audio · Zoom · Meet · Teams · Discord · Intelligence
+Some of these already exist as separate flows and must be REUSED, not rebuilt:
+- Audio (record + upload/transcribe): logic already exists in frontend/booth.js
+  (browser MediaRecorder capture) and frontend/transcribe.js + transcribe.html
+  (upload → POST to the transcribe endpoint → Whisper/Deepgram transcription with
+  speaker diarization).
+- Zoom / Meet / Teams: provider meetings already in frontend/imported-meetings.js
+  (PROVIDER_LABELS, /providers/created-meetings). A green dot = provider connected.
+- Discord / Manual: text/file import already in imported-meetings.html
+  (source select includes "discord (JSON or text)").
+- Intelligence: the Meeting Intelligence flow on frontend/meetings.js.
+Reuse those endpoints and helpers; do not duplicate their logic.
+
+TAB BAR
+- One tab strip titled "Import Conversation", tabs in this order:
+  All, Manual, Audio, Zoom, Meet, Teams, Discord, Intelligence.
+- Each provider tab (Zoom/Meet/Teams) shows a small green status dot when that
+  provider is connected (reuse PROVIDERS_STATUS from imported-meetings.js).
+- Selecting a tab swaps the panel below it; "All" is the default and lists every
+  imported conversation regardless of source with a source tag/pill on each row
+  (ties into the /api/meetings/all "All Meetings" work).
+
+AUDIO TAB (the focus of this task)
+Build the panel exactly like the screenshot:
+1. "Record audio in your browser" section:
+   - A red "Record" button that starts/stops browser capture via MediaRecorder.
+     Reuse the existing recording logic from booth.js (mic permission handling,
+     start/stop, produced Blob) — extract it into a shared helper if needed rather
+     than copy-pasting.
+   - Show elapsed time while recording and a stop/preview control.
+2. "Upload a recording to transcribe" dropzone:
+   - Accept MP3, MP4, WAV, M4A, WebM. Enforce the max size shown (up to 2 GB) and
+     validate extension/type client-side before upload.
+   - Note "with speaker diarization" — route through the existing transcribe
+     endpoint that already supports Deepgram diarization.
+3. On record-stop OR file-select, POST the audio to the existing transcribe
+   endpoint (same one transcribe.js uses), show upload + transcription progress,
+   and on completion route/link to the resulting conversation detail view.
+   Do NOT build a new transcription backend — reuse the current pipeline.
+
+CONSTRAINTS
+- No build step; vanilla JS modules matching the existing frontend pattern.
+- Escape ALL API/user-derived strings with escapeHTML() before innerHTML
+  (this codebase has had XSS via unescaped innerHTML).
+- Keep everything behind login; requests go through the patched fetch in auth.js.
+- Match existing styles.css (cards, pills, intake-tab / meet-subtabs patterns,
+  accent colors). The red Record button = the existing danger/record accent.
+- Handle mic-permission-denied and no-secure-origin gracefully (MediaRecorder
+  needs https/localhost) with a clear inline message.
+- Respect the server's real max upload size — if the backend limit is below 2 GB,
+  reflect the true limit in the UI copy instead of hardcoding 2 GB.
+- If a provider isn't connected, its tab shows a connect prompt, not an error.
+- Add any new page/assets to sw.js SHELL_URLS and bump the cache version.

@@ -1,0 +1,22 @@
+kind = "web"
+previewPath = "/"
+title = "Concap"
+description = "Concap is the existing conversation capture and contact-management website, preserving its recording, meeting intelligence, proposals, and integrations for its current users."
+version = "1.0.0"
+id = "artifacts/concap"
+router = "path"
+
+[[services]]
+name = "web"
+paths = ["/"]
+localPort = 23343
+
+[services.development]
+run = "bash start.sh"
+
+[services.production.run]
+args = ["bash", "artifacts/concap/start.sh"]
+
+[services.env]
+PORT = "23343"
+BASE_PATH = "/"

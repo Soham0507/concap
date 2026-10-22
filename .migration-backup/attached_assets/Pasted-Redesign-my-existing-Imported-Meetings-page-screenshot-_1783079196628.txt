@@ -1,0 +1,54 @@
+Redesign my existing "Imported Meetings" page (screenshot 2) to match the visual 
+design language of the "Brain — Meetings & Conversations" page (screenshot 1). 
+Keep ALL current functionality and content from screenshot 2 — only change the 
+look and feel, layout, and component styling to match screenshot 1.
+
+── DESIGN SYSTEM TO ADOPT (from screenshot 1) ──
+- Font: clean modern sans-serif throughout (Inter or system-ui). Remove ALL serif 
+  fonts and the beige/cream background from the current page.
+- Background: very light near-white with a faint cool tint. White cards on top.
+- Primary accent color: emerald green (#10B981). Use it for the active tab, primary 
+  buttons, "connected" status, and highlight/summary boxes.
+- Cards: white background, rounded corners (~14px), thin light-gray border, soft 
+  subtle shadow. Generous padding.
+- Badges/pills: fully rounded (pill shape), outlined style. Green outline for 
+  positive status (e.g. "2 connected"), gray outline for counts (e.g. "3 meetings").
+- Status dots: small green filled dots next to connected providers.
+- Icons: thin line icons (Lucide style), small, always paired with a text label.
+- Layout: two-column. Left column = import/connect actions. Right column = list of 
+  imported items.
+
+── PAGE STRUCTURE (rebuild to match screenshot 1's layout) ──
+1. Header row: a rounded green square icon on the left, then a bold title 
+   "Imported Meetings" with a muted one-line subtitle beneath it (keep the current 
+   description text about importing transcripts and pulling cloud recordings). 
+   Put a solid green "+ Add" button (with a dropdown chevron) at the top right.
+
+2. Tab navigation (horizontal, icon + label, active tab = light green pill with 
+   green text): keep "Meeting Intelligence" and "Imported & Providers" as the tabs.
+
+3. Sub-action row (like screenshot 1's source filter chips): keep the existing 
+   Paste / Upload / Meetings / Speakers buttons, restyled as a grouped set of 
+   rounded chips inside a light rounded container. Active chip = dark/green fill.
+
+4. Provider selector: keep Zoom, Microsoft Teams, Google Meet as pill toggles, 
+   each with a small colored status dot. Selected provider gets a green ring.
+
+5. LEFT COLUMN — "Connect" card: keep the Zoom "Connected" card with the 
+   "Pull recordings" and "+ New meeting" buttons (restyle: green primary button, 
+   white/outlined secondary). Keep the explanatory helper text. Below it keep the 
+   "SCHEDULED" section with meeting cards showing a status badge (e.g. "Completed").
+
+6. RIGHT COLUMN — "Imported Meetings" list: header with a count pill (e.g. 
+   "3 total") on the left and a "Refresh" button on the right (restyle to green). 
+   Keep the empty state "No imported meetings yet." Keep each meeting card showing: 
+   title, provider badge, date/time, and — where present — a green highlighted 
+   "Meeting created" summary box with the shareable link, Copy/Join buttons, and 
+   invitee list. Style that highlight box like the green "AI Summary" box in 
+   screenshot 1 (light green background, rounded, bulleted details).
+
+── RULES ──
+- Do not remove or rename any existing feature, button, or data field.
+- Match spacing, rounded corners, shadows, and the green accent from screenshot 1.
+- Make it fully responsive; on mobile the two columns should stack.
+- Reference screenshot 1 for the exact vibe: airy, clean, green-accented SaaS UI.

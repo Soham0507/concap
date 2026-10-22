@@ -1,0 +1,395 @@
+We are building an AI-powered Conversation Intelligence platform for expos, meetings, networking events, and business discussions.
+
+Current Status:
+We already have:
+
+* audio recording/upload
+* transcription
+* dashboard UI
+* conversation list
+* summary cards
+* lead scoring UI
+
+But currently the system only does:
+Audio → Transcript → Simple Summary
+
+We now want to build a REAL AI conversation intelligence pipeline.
+
+====================================================
+MAIN PRODUCT GOAL
+=================
+
+A user may record 2–3 hours of continuous audio during:
+
+* expos
+* business networking
+* client meetings
+* sales discussions
+* conferences
+
+During those 2–3 hours:
+
+* multiple people talk
+* topics change
+* new visitors come
+* conversations end/start continuously
+
+The AI system must automatically:
+
+1. transcribe audio
+2. detect speakers
+3. detect when a new conversation starts
+4. split long transcripts into separate conversations
+5. analyze each conversation independently
+6. generate summaries
+7. extract business intelligence
+8. generate lead scores
+9. create structured CRM-ready data
+10. support semantic AI search later
+
+====================================================
+CURRENT PROBLEM
+===============
+
+Right now the system treats the entire 2-hour transcript as ONE conversation.
+
+This is incorrect.
+
+We want AI to automatically detect:
+
+* when one visitor leaves
+* when another visitor starts talking
+* when topic changes
+* when discussion context changes
+
+The AI must intelligently split conversations automatically.
+
+====================================================
+TARGET AI PIPELINE
+==================
+
+The pipeline should become:
+
+Audio Upload
+↓
+Audio Chunking
+↓
+Speech-to-Text Transcription
+↓
+Speaker Diarization
+↓
+Structured Transcript Creation
+↓
+Conversation Segmentation
+↓
+AI Analysis
+↓
+Lead Intelligence Extraction
+↓
+Database Storage
+↓
+Dashboard Visualization
+
+====================================================
+TECH STACK
+==========
+
+Backend:
+
+* Python
+* FastAPI
+
+Frontend:
+
+* HTML
+* TailwindCSS
+* JavaScript
+
+AI:
+
+* OpenAI Whisper for transcription
+* Pyannote Audio for speaker diarization
+* GPT API for summaries and analysis
+* sentence-transformers or embeddings for semantic similarity
+
+Database:
+
+* PostgreSQL
+* pgvector later for semantic search
+
+Queue System:
+
+* Redis
+* Celery
+
+Storage:
+
+* Local storage initially
+* AWS S3 later
+
+====================================================
+MOST IMPORTANT FEATURE
+======================
+
+The MOST IMPORTANT feature is:
+
+AI Conversation Segmentation
+
+We need an AI engine that automatically detects:
+
+* conversation boundaries
+* visitor changes
+* topic changes
+
+====================================================
+HOW CONVERSATION SEGMENTATION SHOULD WORK
+=========================================
+
+The segmentation engine should use multiple signals:
+
+1. Speaker Changes
+   Example:
+   Speaker A + Speaker B
+   ↓
+   Speaker A + Speaker C
+
+This likely means a new visitor joined.
+
+---
+
+2. Silence Detection
+   Example:
+   15–20 seconds silence
+
+This may indicate one conversation ended.
+
+Use:
+
+* ffmpeg silence detection
+* pydub
+
+---
+
+3. Topic Change Detection
+   Example:
+   Discussion about CRM pricing
+   ↓
+   Discussion about manufacturing machinery
+
+This is likely a new conversation.
+
+Use:
+
+* embeddings
+* cosine similarity
+* sentence-transformers
+
+---
+
+4. Semantic Context Change
+   Detect:
+
+* different products
+* different industries
+* different discussion intent
+
+====================================================
+STRUCTURED TRANSCRIPT FORMAT
+============================
+
+Instead of plain transcript text:
+
+"Hello sir nice meeting you"
+
+Store structured transcript like:
+
+[
+{
+"speaker": "Speaker 1",
+"start": 0,
+"end": 12,
+"text": "Hello sir nice meeting you"
+},
+{
+"speaker": "Speaker 2",
+"start": 13,
+"end": 20,
+"text": "We manufacture CRM systems"
+}
+]
+
+This structured transcript becomes the AI input.
+
+====================================================
+IMPORTANT IMPLEMENTATION RULE
+=============================
+
+DO NOT process entire 2-hour audio at once.
+
+Instead:
+
+2-hour audio
+↓
+Split into 2–5 minute chunks
+↓
+Process chunks independently
+↓
+Merge intelligently
+↓
+Run segmentation engine
+
+This is required for:
+
+* scalability
+* memory optimization
+* faster processing
+* AI cost reduction
+
+====================================================
+AI ANALYSIS REQUIREMENTS
+========================
+
+After conversations are segmented:
+
+Analyze EACH conversation independently.
+
+Generate:
+
+* summary
+* action items
+* follow-up tasks
+* sentiment
+* lead quality
+* products discussed
+* pain points
+* competitors mentioned
+* urgency
+* budget
+* buyer intent
+
+====================================================
+EXAMPLE OUTPUT
+==============
+
+Conversation 1:
+Topic: CRM Software
+
+Summary:
+Client interested in CRM automation and WhatsApp integration.
+
+Action Items:
+
+* Send pricing
+* Schedule demo
+
+Lead Score:
+82
+
+Sentiment:
+Positive
+
+---
+
+Conversation 2:
+Topic: Manufacturing Supplier
+
+Summary:
+Discussed steel furniture manufacturing and export pricing.
+
+Action Items:
+
+* Share catalog
+
+Lead Score:
+65
+
+====================================================
+DATABASE REQUIREMENTS
+=====================
+
+Create proper database models/tables for:
+
+recordings
+transcript_chunks
+conversations
+conversation_segments
+action_items
+lead_analysis
+speaker_segments
+
+Store:
+
+* timestamps
+* speaker IDs
+* embeddings
+* summaries
+* lead scores
+* AI metadata
+
+====================================================
+BACKGROUND PROCESSING
+=====================
+
+Use:
+
+* Celery
+* Redis workers
+
+Processing should happen asynchronously.
+
+Pipeline:
+Upload
+→ Queue Job
+→ Chunk Audio
+→ Transcription
+→ Speaker Detection
+→ Segmentation
+→ AI Analysis
+→ Save Results
+
+====================================================
+FUTURE FEATURES
+===============
+
+Design architecture so later we can add:
+
+* semantic search
+* AI chat with conversations
+* CRM integrations
+* WhatsApp follow-up automation
+* live transcription
+* real-time AI suggestions
+* multi-user organization support
+
+====================================================
+IMPORTANT ARCHITECTURE RULES
+============================
+
+1. Use modular architecture
+2. Separate AI services cleanly
+3. Keep transcription service independent
+4. Keep segmentation engine independent
+5. Use timestamps everywhere
+6. Make pipeline scalable
+7. Use background workers
+8. Add logging and retry handling
+9. Keep AI prompts configurable
+10. Optimize for long recordings
+
+====================================================
+CURRENT DEVELOPMENT PRIORITY
+============================
+
+Focus FIRST on implementing:
+
+1. Speaker diarization
+2. Structured transcript generation
+3. Silence detection
+4. Conversation segmentation engine
+5. AI lead intelligence extraction
+
+NOT UI redesign.
+
+The current dashboard UI is already sufficient.
+
+Focus on backend AI intelligence quality.

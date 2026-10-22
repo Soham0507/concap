@@ -1,0 +1,112 @@
+Create an AI-powered QR and document scanner feature using Google Cloud Vision API for our application.
+
+The scanner should allow users to scan QR codes, business cards, ID cards, company documents, or printed company information and automatically extract company and employee details using OCR and text detection.
+
+Core Features:
+
+* Open camera and scan QR/image instantly
+* Upload captured image securely to backend
+* Use Google Cloud Vision API for OCR/text extraction
+* Automatically detect and structure company and employee details
+* Save scanned data directly into the application database
+* Allow users to manage, edit, update, and delete saved records
+
+The system should extract and store:
+
+Company Details:
+
+* Company Name
+* Company Logo
+* GST Number
+* Company Address
+* Website
+* Company Email
+* Phone Number
+* Industry Type
+
+Employee Details:
+
+* Employee Name
+* Designation
+* Employee ID
+* Department
+* Mobile Number
+* Email Address
+* Profile Photo (if available)
+
+Additional Features:
+
+* Manual Add Employee option
+* Manual Add Customer option
+* Edit existing records
+* Delete records
+* Search and filter employees/customers
+* View scan history
+* Save all scanned records automatically
+* Categorize records as Employee or Customer
+* Assign company to employees/customers
+* Add notes and remarks
+* Export records support
+
+Workflow:
+QR/Image Scan → Upload Image → Google Cloud Vision OCR → Parse Text → Extract Structured Data → Save to Database → Display Details Screen
+
+Technical Requirements:
+
+*
+* Google Cloud Vision API integration
+* OCR text detection
+* QR code decoding support
+* Secure API handling
+* Real-time database updates
+* Fast response time
+* Proper loading and error handling
+
+AI Parsing Logic:
+After OCR extraction, intelligently identify:
+
+* Company names
+* Employee names
+* Customer names
+* Emails
+* Phone numbers
+* GST numbers
+* Designations
+* Addresses
+* Websites
+
+Automatically convert extracted OCR text into structured JSON format.
+
+Example Output:
+{
+"company_name": "Whitestone Global",
+"employee_name": "John Doe",
+"designation": "Sales Manager",
+"email": "[john@company.com](mailto:john@company.com)",
+"phone": "+91XXXXXXXXXX",
+"website": "[www.company.com](http://www.company.com)"
+}
+
+Database Requirements:
+
+* Store all scanned records securely
+* Maintain scan timestamps
+* Track who scanned the record
+* Support real-time updates
+* Allow future editing and management
+
+UI Requirements:
+
+* Premium modern UI
+* Smooth animations
+* Professional dashboard layout
+* Card-based company and employee profile sections
+* Company logo preview
+* Search bar and filters
+* Add Employee button
+* Add Customer button
+* Scan button with floating action design
+* Dark/light mode support
+* Responsive mobile design
+
+The complete feature should feel intelligent, fast, modern, and enterprise-grade.

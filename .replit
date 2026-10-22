@@ -1,0 +1,33 @@
+modules = ["nodejs-24", "python-3.12"]
+
+[deployment]
+router = "application"
+deploymentTarget = "vm"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 300000
+
+[userenv]
+
+[userenv.shared]
+MS_TENANT_OVERRIDE = "common"
+
+[nix]
+channel = "stable-25_05"
+packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80

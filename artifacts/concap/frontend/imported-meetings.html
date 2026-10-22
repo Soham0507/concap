@@ -1,0 +1,1845 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Imported Meetings — Concap AI</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/auth.js"></script>
+    <script src="/static/appnav.js"></script>
+    <script src="/static/voice-reminder.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .concap-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "Fraunces", serif;
+        font-size: 22px;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        font-style: italic;
+        color: #fff;
+      }
+      .concap-logo-mark {
+        width: 26px;
+        height: 26px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .concap-logo-mark::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1.5px solid #ff5b2e;
+        border-radius: 50%;
+      }
+      .concap-logo-mark::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: #ff5b2e;
+        border-radius: 50%;
+        animation: concapPulse 2.2s ease-in-out infinite;
+      }
+      @keyframes concapPulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(0.7);
+        }
+      }
+
+      /* Primary tabs (Paste | Upload | Meetings | Speakers) */
+      .primary-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .ptab {
+        padding: 11px 22px;
+        border: 1px solid var(--border);
+        background: var(--surface-alt);
+        color: var(--text-muted);
+        border-radius: 11px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.14s ease;
+      }
+      .ptab:hover {
+        color: var(--text);
+        border-color: var(--border-strong, #d8d8d8);
+      }
+      .ptab.active {
+        background: var(--accent-soft);
+        color: var(--accent-soft-text);
+        border-color: var(--accent);
+      }
+      .primary-pane {
+        display: none;
+      }
+      .primary-pane.active {
+        display: block;
+        animation: paneIn 0.18s ease;
+      }
+      @keyframes paneIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .focus-pane {
+        max-width: 640px;
+      }
+
+      /* Provider sub-tabs (Zoom | Teams | Meet) */
+      .prov-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+      }
+      .prov-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-muted);
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.14s ease;
+      }
+      .prov-tab .pt-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--pt, #999);
+        flex-shrink: 0;
+      }
+      .prov-tab:hover {
+        color: var(--text);
+        border-color: var(--pt, var(--accent));
+      }
+      .prov-tab.active {
+        color: var(--text);
+        background: var(--surface-alt);
+        border-color: var(--pt, var(--accent));
+        box-shadow: inset 0 0 0 1px var(--pt, var(--accent));
+      }
+
+      /* Meetings split: providers (40%) | imported + viewer (60%) */
+      .meet-split {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+        gap: 18px;
+        align-items: start;
+      }
+      @media (max-width: 980px) {
+        .meet-split {
+          grid-template-columns: 1fr;
+        }
+      }
+      .meet-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      /* Loading skeletons */
+      .skel-wrap {
+        padding: 14px 16px;
+      }
+      .skel {
+        height: 13px;
+        border-radius: 6px;
+        background: linear-gradient(
+          90deg,
+          var(--surface-alt) 25%,
+          var(--surface-hover) 37%,
+          var(--surface-alt) 63%
+        );
+        background-size: 400% 100%;
+        animation: skelPulse 1.3s ease infinite;
+        margin: 9px 0;
+      }
+      .skel.short {
+        width: 55%;
+      }
+      .skel.med {
+        width: 78%;
+      }
+      @keyframes skelPulse {
+        0% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0 50%;
+        }
+      }
+      .field {
+        margin-bottom: 12px;
+      }
+      .field label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        padding: 9px 12px;
+      }
+      .field textarea {
+        min-height: 160px;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.5;
+      }
+      .dropzone {
+        border: 1.5px dashed var(--border);
+        border-radius: 12px;
+        padding: 26px 16px;
+        text-align: center;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition:
+          border-color 0.15s ease,
+          background 0.15s ease;
+      }
+      .dropzone:hover,
+      .dropzone.drag {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .dropzone .dz-ic {
+        font-size: 30px;
+        opacity: 0.5;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .batch-list-card {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 160px);
+        overflow: hidden;
+      }
+      @media (max-width: 1040px) {
+        .batch-list-card {
+          max-height: none;
+        }
+      }
+      .batch-list {
+        overflow-y: auto;
+        flex: 1;
+      }
+      .batch-row {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.14s ease;
+      }
+      .batch-row:hover {
+        background: var(--surface-hover);
+      }
+      .batch-row.selected {
+        background: var(--accent-soft);
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+      .batch-row .br-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .batch-row .br-label {
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .batch-row .br-when {
+        font-size: 11px;
+        color: var(--text-subtle);
+        white-space: nowrap;
+      }
+      .batch-row .br-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* Scheduled (app-created) meeting cards */
+      .sched-card {
+        padding: 15px 16px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.14s ease;
+      }
+      .sched-card:hover {
+        background: var(--surface-hover);
+      }
+      .sched-card.selected {
+        background: var(--accent-soft);
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+      .sched-card .sc-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 9px;
+      }
+      .sched-card .sc-title {
+        font-weight: 600;
+        font-size: 14.5px;
+        color: var(--text);
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sched-card .sc-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 12px;
+      }
+      .sched-card .sc-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+      .sched-card .sc-ic {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        color: var(--text-subtle);
+        display: inline-flex;
+      }
+      .sched-card .sc-ic svg {
+        width: 14px;
+        height: 14px;
+      }
+      .sched-card .sc-row span:last-child {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sched-card .sc-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .sc-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        background: var(--surface-alt);
+        color: var(--text);
+        text-decoration: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition:
+          background 0.12s ease,
+          border-color 0.12s ease,
+          color 0.12s ease;
+      }
+      .sc-btn:hover:not(:disabled) {
+        background: var(--surface-hover);
+        border-color: var(--accent);
+        color: var(--accent-soft-text);
+      }
+      .sc-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .sc-btn.join {
+        color: var(--success-soft-text);
+        border-color: var(--success);
+      }
+      .sc-btn.join:hover {
+        background: var(--success-soft);
+        border-color: var(--success);
+        color: var(--success-soft-text);
+      }
+      .sc-btn.danger {
+        color: var(--danger);
+      }
+      .sc-btn.danger:hover {
+        background: var(--danger-soft);
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .sc-bic {
+        width: 14px;
+        height: 14px;
+        display: inline-flex;
+        flex-shrink: 0;
+      }
+      .sc-bic svg {
+        width: 14px;
+        height: 14px;
+      }
+      .sc-empty {
+        padding: 30px 22px;
+        text-align: center;
+      }
+      .sc-empty-ic {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 12px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--info-soft);
+        color: var(--info-soft-text);
+      }
+      .sc-empty-ic svg {
+        width: 20px;
+        height: 20px;
+      }
+      .sc-empty-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 5px;
+      }
+      .sc-empty-sub {
+        font-size: 12.5px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+      .sc-empty-sub strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 999px;
+        text-transform: capitalize;
+      }
+      .pill.scheduled {
+        background: var(--info-soft);
+        color: var(--info-soft-text);
+      }
+      .pill.ongoing {
+        background: var(--success-soft);
+        color: var(--success-soft-text);
+      }
+      .pill.completed {
+        background: var(--surface-alt);
+        color: var(--text-muted);
+      }
+      .pp-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .pp-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+      .pp-info {
+        min-width: 0;
+      }
+      .pp-email {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pp-sub {
+        font-size: 11.5px;
+        color: var(--text-muted);
+        margin-top: 3px;
+      }
+      .pp-badge {
+        display: inline-block;
+        background: var(--info-soft);
+        color: var(--info-soft-text);
+        font-weight: 600;
+        padding: 1px 7px;
+        border-radius: 999px;
+        font-size: 11px;
+      }
+      .pill.manual,
+      .pill.slack,
+      .pill.discord,
+      .pill.email,
+      .pill.srt {
+        background: var(--accent-soft);
+        color: var(--accent-soft-text);
+      }
+      .pill.zoom {
+        background: var(--info-soft);
+        color: var(--info-soft-text);
+      }
+      .pill.google_meet {
+        background: var(--success-soft);
+        color: var(--success-soft-text);
+      }
+      .pill.ms_teams {
+        background: var(--info-soft);
+        color: var(--info-soft-text);
+      }
+
+      .mtg-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 14px;
+        padding: 70px 24px;
+        color: var(--text-muted);
+      }
+      .mtg-empty-ic {
+        font-size: 34px;
+        opacity: 0.5;
+      }
+      .detail-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .detail-head h2 {
+        margin: 0;
+        flex: 1;
+        min-width: 180px;
+      }
+      .detail-sub {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+
+      .seg {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid var(--border);
+      }
+      .seg button {
+        padding: 9px 14px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: -1px;
+      }
+      .seg button.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      .spk-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .spk-row:last-child {
+        border-bottom: none;
+      }
+      .spk-id {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent-soft-text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .spk-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .spk-name {
+        font-weight: 500;
+        font-size: 14px;
+      }
+      .spk-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .spk-tag {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--success-soft);
+        color: var(--success-soft-text);
+      }
+
+      .utt {
+        padding: 9px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 13.5px;
+        line-height: 1.55;
+      }
+      .utt:last-child {
+        border-bottom: none;
+      }
+      .utt .u-spk {
+        font-weight: 600;
+        color: var(--accent-soft-text);
+      }
+
+      /* Branded provider cards */
+      .prov-card {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-bottom: 12px;
+        overflow: hidden;
+        background: var(--surface);
+        transition:
+          border-color 0.16s ease,
+          box-shadow 0.16s ease;
+      }
+      .prov-card:hover {
+        border-color: var(--border-strong, #d8d8d8);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      }
+      .prov-card.connected {
+        border-color: var(--success);
+      }
+      .prov-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--brand, #999);
+      }
+      .prov-head {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 14px 16px 14px 18px;
+      }
+      .prov-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 17px;
+        color: #fff;
+        background: var(--brand, #999);
+        box-shadow: 0 2px 8px var(--brand-shadow, rgba(0, 0, 0, 0.15));
+      }
+      .prov-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .prov-name {
+        font-weight: 600;
+        font-size: 14.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .prov-status {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .prov-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .prov-dot.on {
+        background: var(--success);
+        box-shadow: 0 0 0 3px var(--success-soft);
+      }
+      .prov-dot.off {
+        background: var(--text-subtle);
+      }
+      .prov-dot.warn {
+        background: var(--warning);
+        box-shadow: 0 0 0 3px var(--warning-soft);
+      }
+      .prov-actions {
+        display: flex;
+        gap: 7px;
+        flex-shrink: 0;
+        align-items: center;
+      }
+      .prov-foot {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 14px 18px;
+        flex-wrap: wrap;
+      }
+
+      /* Engaging "Pull recordings" button */
+      .pull-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 15px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--brand, #444);
+        transition:
+          transform 0.12s ease,
+          filter 0.12s ease,
+          opacity 0.12s ease;
+      }
+      .pull-btn:hover:not(:disabled) {
+        filter: brightness(1.07);
+        transform: translateY(-1px);
+      }
+      .pull-btn:active:not(:disabled) {
+        transform: translateY(0);
+      }
+      .pull-btn:disabled {
+        opacity: 0.7;
+        cursor: default;
+      }
+      .pull-btn .pull-ic {
+        font-size: 14px;
+        line-height: 1;
+        display: inline-flex;
+      }
+      .pull-btn.busy .pull-ic {
+        animation: pullspin 0.8s linear infinite;
+      }
+      @keyframes pullspin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .mini-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 13px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 12.5px;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        background: var(--surface-alt);
+        color: var(--text);
+        transition:
+          background 0.12s ease,
+          border-color 0.12s ease;
+      }
+      .mini-btn:hover {
+        background: var(--surface-hover);
+        border-color: var(--brand, var(--accent));
+      }
+      .icon-btn {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        background: var(--surface-alt);
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .icon-btn:hover {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 18, 22, 0.5);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 300;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.16s ease;
+      }
+      .modal-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal {
+        width: 100%;
+        max-width: 460px;
+        max-height: 88vh;
+        overflow-y: auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+        transform: translateY(8px) scale(0.99);
+        transition: transform 0.16s ease;
+      }
+      .modal-overlay.show .modal {
+        transform: none;
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .modal-head .prov-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        font-size: 15px;
+      }
+      .modal-head h3 {
+        margin: 0;
+        font-size: 16px;
+        flex: 1;
+      }
+      .modal-x {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 20px;
+        line-height: 1;
+        padding: 2px 6px;
+        border-radius: 7px;
+      }
+      .modal-x:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+      }
+      .modal-body {
+        padding: 18px 20px;
+      }
+      .modal-foot {
+        padding: 14px 20px 18px;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .meet-result {
+        border: 1px solid var(--success);
+        background: var(--success-soft);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .meet-link-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .meet-link-row input {
+        flex: 1;
+        font-size: 12.5px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .cal-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .cal-group-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-subtle);
+        font-weight: 700;
+        margin: 14px 0 6px;
+      }
+      .cal-group-label:first-child {
+        margin-top: 0;
+      }
+      .cal-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 10px;
+        border-radius: 10px;
+        transition: background 0.12s ease;
+      }
+      .cal-row:hover {
+        background: var(--surface-hover);
+      }
+      .cal-row.past {
+        opacity: 0.62;
+      }
+      .cal-when {
+        width: 58px;
+        flex-shrink: 0;
+        text-align: center;
+      }
+      .cal-when .cw-day {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--text-subtle);
+        letter-spacing: 0.04em;
+      }
+      .cal-when .cw-time {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .cal-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .cal-title {
+        font-size: 13.5px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .cal-meta {
+        font-size: 11.5px;
+        color: var(--text-muted);
+        margin-top: 1px;
+      }
+      .cal-join {
+        flex-shrink: 0;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--text);
+        color: var(--bg);
+        padding: 11px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        z-index: 200;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .muted {
+        color: var(--text-muted);
+      }
+
+      /* =====================================================================
+         "Brain" layout language — scoped to this page's main content.
+         Clean cards, pills and grouped controls. All colors come from the
+         app's existing theme tokens (var(--accent) / --bg / --surface / ...)
+         so BOTH light and dark mode work; only the sans body font is set here.
+         ===================================================================== */
+      main.content {
+        --serif:
+          "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        --sans:
+          "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        font-family: var(--sans);
+      }
+      main.content .card {
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+      }
+      main.content .card.flush:hover,
+      main.content .card:hover {
+        box-shadow: var(--shadow-md);
+      }
+      main.content h1,
+      main.content h2,
+      main.content h3 {
+        font-family: var(--sans);
+      }
+      main.content .page-header h1 {
+        font-weight: 700;
+        font-size: 27px;
+        letter-spacing: -0.02em;
+      }
+
+      /* --- Header row: green square icon + title + "+ Add" button --------- */
+      .page-header.brain-header {
+        align-items: center;
+      }
+      .ph-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+      .ph-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: var(--accent-gradient);
+        box-shadow: var(--shadow-accent);
+      }
+      .ph-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+      .add-wrap {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .brain-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        font-family: var(--sans);
+        background: var(--accent-gradient);
+        box-shadow: var(--shadow-accent);
+        transition:
+          filter 0.12s ease,
+          transform 0.12s ease;
+      }
+      .brain-add:hover {
+        filter: brightness(1.05);
+        transform: translateY(-1px);
+      }
+      .brain-add svg {
+        width: 15px;
+        height: 15px;
+      }
+      .brain-add .chev {
+        width: 13px;
+        height: 13px;
+        opacity: 0.9;
+        transition: transform 0.15s ease;
+      }
+      .brain-add.open .chev {
+        transform: rotate(180deg);
+      }
+      .add-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        min-width: 210px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: var(--shadow-lg);
+        padding: 6px;
+        z-index: 120;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .add-menu button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        text-align: left;
+        padding: 9px 11px;
+        border: none;
+        background: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--text);
+        font-family: var(--sans);
+        transition: background 0.12s ease;
+      }
+      .add-menu button:hover {
+        background: var(--surface-alt);
+      }
+      .add-menu button svg {
+        width: 16px;
+        height: 16px;
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+
+      /* --- Sub-tab pills (Meeting Intelligence / Imported & Providers) ---- */
+      main.content .meet-subtabs {
+        background: var(--surface-alt);
+        border-color: var(--border);
+      }
+      main.content .meet-subtabs a svg {
+        width: 15px;
+        height: 15px;
+      }
+      main.content .meet-subtabs a.active {
+        background: var(--accent-soft);
+        color: var(--accent-soft-text);
+        box-shadow: none;
+      }
+
+      /* --- Primary tabs restyled as a grouped chip / segmented control --- */
+      main.content .primary-tabs {
+        display: inline-flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        padding: 5px;
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        background: var(--surface-alt);
+      }
+      main.content .ptab {
+        border: none;
+        background: transparent;
+        border-radius: 9px;
+        padding: 9px 18px;
+        color: var(--text-muted);
+      }
+      main.content .ptab:hover {
+        color: var(--text);
+        border-color: transparent;
+      }
+      main.content .ptab.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      /* --- Provider pills: colored status dot + green ring when selected -- */
+      main.content .prov-tab {
+        background: var(--surface);
+      }
+      main.content .prov-tab.active {
+        color: var(--text);
+        background: var(--surface);
+        border-color: var(--accent);
+        box-shadow:
+          inset 0 0 0 1px var(--accent),
+          0 0 0 3px var(--accent-soft);
+      }
+
+      /* --- Green primary "Pull recordings" button ------------------------ */
+      main.content .pull-btn {
+        background: var(--accent);
+      }
+      main.content .pull-btn:hover:not(:disabled) {
+        background: var(--accent-hover);
+        filter: none;
+      }
+
+      /* --- Card section headers, count pill & green Refresh -------------- */
+      .card-hd {
+        padding: 15px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .card-hd-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: var(--text-muted);
+      }
+      .count-pill {
+        text-transform: none;
+        letter-spacing: 0;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--text-muted);
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 2px 10px;
+        white-space: nowrap;
+      }
+      main.content .refresh-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 13px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 999px;
+        cursor: pointer;
+        color: var(--accent-soft-text);
+        background: var(--accent-soft);
+        border: 1px solid var(--accent-glow);
+        transition:
+          background 0.12s ease,
+          border-color 0.12s ease;
+      }
+      main.content .refresh-btn:hover {
+        background: var(--accent-glow);
+        border-color: var(--accent);
+      }
+      main.content .refresh-btn svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      /* --- "Meeting created" highlight box (like the green AI Summary) ---- */
+      main.content .meet-result {
+        background: var(--success-soft);
+        border: 1px solid var(--success);
+        border-radius: var(--radius-lg);
+      }
+      main.content .meet-result .mr-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--success-soft-text);
+      }
+      main.content .meet-result .mr-head svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* --- Status dot for the connected-provider count pill -------------- */
+      .count-pill.connected {
+        color: var(--success-soft-text);
+        background: var(--success-soft);
+        border-color: var(--success);
+      }
+      .count-pill.connected .cp-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--success);
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 600px) {
+        .page-header.brain-header {
+          align-items: flex-start;
+        }
+        .add-wrap {
+          width: 100%;
+        }
+        .brain-add {
+          width: 100%;
+          justify-content: center;
+        }
+        .add-menu {
+          left: 0;
+          right: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand" style="margin-bottom: 24px">
+          <div class="concap-logo">
+            <div class="concap-logo-mark"></div>
+            Concap AI
+          </div>
+        </div>
+        <div class="nav-section">Insights</div>
+        <a class="nav-item" href="/dashboard"
+          ><span class="icon">◧</span> Dashboard</a
+        >
+        <a class="nav-item" href="/transcribe"
+          ><span class="icon">✎</span> Quick transcribe</a
+        >
+        <div class="nav-section">CRM</div>
+        <a class="nav-item" href="/scan"
+          ><span class="icon">⧈</span> Scan card</a
+        >
+        <a class="nav-item" href="/companies"
+          ><span class="icon">▦</span> Companies</a
+        >
+        <a class="nav-item" href="/contacts"
+          ><span class="icon">◰</span> Contacts</a
+        >
+
+        <div class="nav-section">Settings</div>
+        <a class="nav-item" href="/integrations"
+          ><span class="icon">⚡</span> Integrations</a
+        >
+
+        <div class="footer">
+          <div class="row" style="margin-bottom: 10px">
+            <span class="dot"></span><span id="org-name">—</span>
+          </div>
+          <div class="account">
+            <span class="avatar">@</span
+            ><span class="email" id="auth-email">—</span>
+          </div>
+          <a class="logout" id="auth-logout">Sign out</a>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="content-inner">
+          <nav class="meet-subtabs">
+            <a href="/all-meetings"
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              All Meetings</a
+            >
+            <a href="/meetings"
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0-3 3 3 3 0 0 0 0 6 3 3 0 0 0 3 3v1a3 3 0 0 0 6 0v-1a3 3 0 0 0 3-3 3 3 0 0 0 0-6 3 3 0 0 0-3-3V5a3 3 0 0 0-3-3Z"
+                />
+              </svg>
+              Meeting Intelligence</a
+            >
+            <a href="/imported-meetings" class="active" aria-current="page"
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M7 10l5 5 5-5" />
+                <path d="M12 15V3" />
+              </svg>
+              Imported &amp; Providers</a
+            >
+          </nav>
+          <div class="page-header brain-header">
+            <div class="ph-left">
+              <div class="ph-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                  <path d="M8 14l3 3 5-5" />
+                </svg>
+              </div>
+              <div>
+                <h1>Imported Meetings</h1>
+                <div class="subtitle">
+                  Import conversations from your meetings, chats, and calls.
+                  Attach them to AI chat for context-aware analysis.
+                </div>
+              </div>
+            </div>
+            <div class="add-wrap">
+              <button
+                class="brain-add"
+                id="btn-add"
+                type="button"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Add
+                <svg
+                  class="chev"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              <div class="add-menu hidden" id="add-menu" role="menu">
+                <button data-add="paste" type="button" role="menuitem">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+                    />
+                    <rect x="8" y="2" width="8" height="4" rx="1" />
+                  </svg>
+                  Paste transcript
+                </button>
+                <button data-add="upload" type="button" role="menuitem">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="M7 9l5-5 5 5" />
+                    <path d="M12 4v12" />
+                  </svg>
+                  Upload file
+                </button>
+                <button data-add="meetings" type="button" role="menuitem">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="m17 8 4-2v12l-4-2" />
+                    <rect x="3" y="6" width="14" height="12" rx="2" />
+                  </svg>
+                  Cloud meetings
+                </button>
+                <button data-add="speakers" type="button" role="menuitem">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path
+                      d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+                    />
+                  </svg>
+                  Speakers
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mtg-shell">
+            <!-- Primary top-level tabs -->
+            <div class="primary-tabs" id="primary-tabs">
+              <button class="ptab" data-ptab="paste" type="button">
+                Paste
+              </button>
+              <button class="ptab" data-ptab="upload" type="button">
+                Upload
+              </button>
+              <button class="ptab active" data-ptab="meetings" type="button">
+                Meetings
+              </button>
+              <button class="ptab" data-ptab="speakers" type="button">
+                Speakers
+              </button>
+            </div>
+
+            <!-- PASTE -->
+            <div class="primary-pane" data-ppane="paste">
+              <section class="card focus-pane">
+                <div class="field">
+                  <label for="m-kind">Format</label>
+                  <select id="m-kind">
+                    <option value="plain">Plain text / transcript</option>
+                    <option value="slack">Slack (JSON or text)</option>
+                    <option value="discord">Discord (JSON or text)</option>
+                    <option value="email">Email (.eml / thread)</option>
+                    <option value="srt">Subtitles (SRT / VTT)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="m-title">Title (optional)</label>
+                  <input
+                    id="m-title"
+                    type="text"
+                    placeholder="e.g. Acme kickoff call"
+                  />
+                </div>
+                <div class="field">
+                  <label for="m-text">Content</label>
+                  <textarea
+                    id="m-text"
+                    placeholder="Paste a transcript or chat log here…"
+                  ></textarea>
+                </div>
+                <button
+                  class="btn-primary"
+                  id="btn-import"
+                  type="button"
+                  style="width: 100%"
+                >
+                  Import
+                </button>
+              </section>
+            </div>
+
+            <!-- UPLOAD -->
+            <div class="primary-pane" data-ppane="upload">
+              <section class="card focus-pane">
+                <div class="field">
+                  <label>File</label>
+                  <div class="dropzone" id="dropzone">
+                    <span class="dz-ic">⬆</span>
+                    <span id="dz-label"
+                      >Drop a transcript (.txt, .md, .srt, .vtt, .json, .eml)
+                      here, or click to browse.</span
+                    >
+                    <input
+                      id="file-input"
+                      type="file"
+                      class="hidden"
+                      accept=".txt,.md,.srt,.vtt,.json,.eml"
+                    />
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="u-title">Title (optional)</label>
+                  <input
+                    id="u-title"
+                    type="text"
+                    placeholder="Defaults to file name"
+                  />
+                </div>
+                <button
+                  class="btn-primary"
+                  id="btn-upload"
+                  type="button"
+                  style="width: 100%"
+                >
+                  Upload &amp; import
+                </button>
+              </section>
+            </div>
+
+            <!-- MEETINGS -->
+            <div class="primary-pane active" data-ppane="meetings">
+              <!-- Provider sub-tabs -->
+              <div class="prov-tabs" id="prov-tabs">
+                <button
+                  class="prov-tab active"
+                  data-prov="zoom"
+                  type="button"
+                  style="--pt: #2d8cff"
+                >
+                  <span class="pt-dot"></span>Zoom
+                </button>
+                <button
+                  class="prov-tab"
+                  data-prov="ms_teams"
+                  type="button"
+                  style="--pt: #5b5fc7"
+                >
+                  <span class="pt-dot"></span>Microsoft Teams
+                </button>
+                <button
+                  class="prov-tab"
+                  data-prov="google_meet"
+                  type="button"
+                  style="--pt: #00897b"
+                >
+                  <span class="pt-dot"></span>Google Meet
+                </button>
+              </div>
+
+              <div class="meet-split">
+                <!-- LEFT 40%: selected provider + its meetings -->
+                <div class="meet-col">
+                  <section class="card">
+                    <div id="providers-list">
+                      <div class="skel-wrap">
+                        <div class="skel med"></div>
+                        <div class="skel short"></div>
+                      </div>
+                    </div>
+                    <div
+                      class="muted"
+                      style="font-size: 12px; margin-top: 10px"
+                    >
+                      Connecting links this workspace to your account. Pull
+                      recent cloud-recording transcripts with their speaker
+                      labels — and with Google Meet, create new meetings and
+                      browse your calendar.
+                    </div>
+                  </section>
+
+                  <section
+                    class="card flush batch-list-card hidden"
+                    id="created-card"
+                  >
+                    <div class="card-hd">
+                      <span class="card-hd-title">Scheduled</span>
+                    </div>
+                    <div class="batch-list" id="created-list"></div>
+                  </section>
+
+                  <section
+                    class="card flush batch-list-card hidden"
+                    id="calendar-card"
+                  >
+                    <div class="card-hd">
+                      <span class="card-hd-title">On your calendar</span>
+                      <button
+                        class="refresh-btn"
+                        id="btn-cal-refresh"
+                        type="button"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                          <path d="M21 3v5h-5" />
+                          <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                          <path d="M3 21v-5h5" />
+                        </svg>
+                        Refresh
+                      </button>
+                    </div>
+                    <div class="batch-list" id="calendar-list"></div>
+                  </section>
+                </div>
+
+                <!-- RIGHT 60%: imported library + transcript viewer -->
+                <div class="meet-col">
+                  <section class="card flush batch-list-card">
+                    <div class="card-hd">
+                      <span class="card-hd-title"
+                        >Imported Meetings
+                        <span class="count-pill" id="imported-count"
+                          >0 total</span
+                        ></span
+                      >
+                      <button
+                        class="refresh-btn"
+                        id="btn-refresh"
+                        type="button"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                          <path d="M21 3v5h-5" />
+                          <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                          <path d="M3 21v-5h5" />
+                        </svg>
+                        Refresh
+                      </button>
+                    </div>
+                    <div class="batch-list" id="meeting-list"></div>
+                    <div style="padding: 16px" class="muted" id="list-status">
+                      Loading…
+                    </div>
+                  </section>
+
+                  <section class="card" id="detail-card">
+                    <div id="detail-empty" class="mtg-empty">
+                      <div class="mtg-empty-ic">◰</div>
+                      <p>
+                        Select a meeting from the Imported Meetings list to view
+                        its speakers and full transcript.
+                      </p>
+                    </div>
+                    <div id="detail-body" class="hidden"></div>
+                  </section>
+                </div>
+              </div>
+            </div>
+
+            <!-- SPEAKERS -->
+            <div class="primary-pane" data-ppane="speakers">
+              <section class="card focus-pane">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <span class="card-hd-title" style="padding: 0; border: 0"
+                    >Speaker registry</span
+                  >
+                  <button
+                    class="refresh-btn"
+                    id="btn-spk-refresh"
+                    type="button"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                      <path d="M21 3v5h-5" />
+                      <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                      <path d="M3 21v-5h5" />
+                    </svg>
+                    Refresh
+                  </button>
+                </div>
+                <div id="speakers-list">
+                  <div class="muted" style="padding: 8px 0">Loading…</div>
+                </div>
+                <div class="muted" style="font-size: 12px; margin-top: 10px">
+                  Confirm speakers from a meeting's Speakers tab to build this
+                  registry. Recognized people are matched automatically in
+                  future imports.
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div id="modal-root"></div>
+    <script src="/static/imported-meetings.js"></script>
+  </body>
+</html>

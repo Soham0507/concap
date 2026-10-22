@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0a0b" />
+  <title>Create account — Concap AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/auth.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+  <style>
+    .concap-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Fraunces', 'Times New Roman', serif;
+      font-size: 22px; font-weight: 400;
+      letter-spacing: -0.02em; font-style: italic;
+      color: #fff;
+    }
+    .concap-logo-mark {
+      width: 26px; height: 26px; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .concap-logo-mark::before {
+      content: ''; position: absolute; inset: 0;
+      border: 1.5px solid #FF5B2E; border-radius: 50%;
+    }
+    .concap-logo-mark::after {
+      content: ''; width: 8px; height: 8px;
+      background: #FF5B2E; border-radius: 50%;
+      animation: concapPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes concapPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
+    }
+    .auth-divider { display:flex; align-items:center; gap:12px; margin:18px 0; color:var(--text-subtle); font-size:12px; }
+    .auth-divider::before, .auth-divider::after { content:""; flex:1; height:1px; background:var(--border); }
+    .btn-google { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:10px 14px; border-radius:var(--radius); border:1px solid var(--border); background:#fff; color:#1f1f1f; font-weight:500; font-size:14px; text-decoration:none; transition: all .14s ease; box-sizing:border-box; }
+    .btn-google:hover { background:#f3f3f3; border-color:var(--border-strong); }
+    .btn-google svg { width:18px; height:18px; flex-shrink:0; }
+    .btn-google[hidden], .auth-divider[hidden] { display:none; }
+  </style>
+  <script src="/static/google-auth.js"></script>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand" style="margin-bottom:24px;">
+        <div class="concap-logo">
+          <div class="concap-logo-mark"></div>
+          Concap AI
+        </div>
+      </div>
+
+      <h1>Create account</h1>
+      <p class="sub">You'll own the workspace you create here.</p>
+
+      <div id="alert"></div>
+
+      <form id="signup-form">
+        <div class="field">
+          <label>Account type</label>
+          <div style="display:flex; gap:8px;">
+            <label style="flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; font-weight:500;">
+              <input type="radio" name="acct" value="individual" checked style="width:auto;" /> Individual
+            </label>
+            <label style="flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; font-weight:500;">
+              <input type="radio" name="acct" value="company" style="width:auto;" /> Company
+            </label>
+          </div>
+        </div>
+        <div class="field hidden" id="company-field">
+          <label for="company">Company name</label>
+          <input id="company" type="text" placeholder="e.g. Acme Corp" />
+        </div>
+        <div class="field">
+          <label for="name">Your name</label>
+          <input id="name" type="text" autocomplete="name" placeholder="Optional" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="new-password" required minlength="8" />
+          <div class="subtle" style="margin-top:6px;">At least 8 characters.</div>
+        </div>
+        <button type="submit" id="submit-btn">Create account</button>
+      </form>
+
+      <div class="auth-divider" id="google-divider" hidden>or</div>
+      <a href="/api/auth/google/start" class="btn-google" id="google-btn" hidden>
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
+          <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3.1 0 5.9 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"/>
+          <path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 35.2 26.8 36 24 36c-5.4 0-9.9-3.4-11.5-8.1l-6.5 5C9.6 39.6 16.2 44 24 44z"/>
+          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.1-3.5 5.6-6.6 7.1l6.3 5.3C38.5 37.6 44 31.6 44 24c0-1.3-.1-2.7-.4-3.5z"/>
+        </svg>
+        Continue with Google
+      </a>
+
+      <div class="switch">
+        Already have an account? <a href="/login">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var alertEl;
+      function showError(msg) {
+        if (!alertEl) alertEl = document.getElementById("alert");
+        alertEl.innerHTML = '<div class="alert error">' + msg + "</div>";
+      }
+
+      // A redirect back from /api/auth/google/callback carries the result in
+      // the URL fragment — handle that before anything else on the page.
+      var googleToken = window.GoogleAuth.consumeToken();
+      if (googleToken) {
+        window.GoogleAuth.finishLogin(googleToken).then(function (ok) {
+          if (ok) window.location.href = "/dashboard";
+          else { boot(); showError("Google sign-in failed. Please try again."); }
+        });
+        return;
+      }
+      boot();
+
+      function boot() {
+      if (window.Auth && window.Auth.isAuthed()) {
+        window.location.replace("/booth");
+        return;
+      }
+      var form = document.getElementById("signup-form");
+      alertEl = document.getElementById("alert");
+      var btn = document.getElementById("submit-btn");
+      var companyField = document.getElementById("company-field");
+      var googleBtn = document.getElementById("google-btn");
+      var googleDivider = document.getElementById("google-divider");
+
+      var googleError = window.GoogleAuth.consumeError();
+      if (googleError) showError(googleError);
+
+      fetch("/api/auth/google/enabled")
+        .then(function (resp) { return resp.ok ? resp.json() : { enabled: false }; })
+        .then(function (data) { if (data.enabled) { googleBtn.hidden = false; googleDivider.hidden = false; } })
+        .catch(function () {});
+
+      form.acct.forEach(function (r) {
+        r.addEventListener("change", function () {
+          companyField.classList.toggle("hidden", form.acct.value !== "company");
+        });
+      });
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        btn.disabled = true;
+        alertEl.innerHTML = "";
+        var pw = document.getElementById("password").value;
+        if (pw.length < 8) {
+          alertEl.innerHTML = '<div class="alert error">Password must be at least 8 characters.</div>';
+          btn.disabled = false;
+          return;
+        }
+        var acctType = form.acct.value;
+        var companyName = document.getElementById("company").value.trim();
+        if (acctType === "company" && !companyName) {
+          alertEl.innerHTML = '<div class="alert error">Company name is required for a company account.</div>';
+          btn.disabled = false;
+          return;
+        }
+        try {
+          var resp = await fetch("/api/auth/signup", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              name: document.getElementById("name").value.trim() || null,
+              email: document.getElementById("email").value.trim(),
+              password: pw,
+              account_type: acctType,
+              company_name: acctType === "company" ? companyName : null,
+            }),
+          });
+          var data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || ("Signup failed (" + resp.status + ")"));
+          window.Auth.set(data.token, data.user);
+          window.location.href = "/booth";
+        } catch (err) {
+          alertEl.innerHTML = '<div class="alert error">' + err.message + "</div>";
+          btn.disabled = false;
+        }
+      });
+      } // end boot()
+    })();
+  </script>
+</body>
+</html>

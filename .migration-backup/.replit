@@ -1,0 +1,49 @@
+modules = ["nodejs-20", "python-3.12", "postgresql-16"]
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && PREVIEW_AUTH_BYPASS=1 python -m uvicorn app.main:app --host 0.0.0.0 --port 5000"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[agent]
+expertMode = true
+integrations = ["python_anthropic_ai_integrations:1.0.0", "replitmail:1.0.0"]
+
+[deployment]
+deploymentTarget = "vm"
+run = ["bash", "-c", "cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 5000"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
+
+[userenv]
+
+[userenv.shared]
+MS_TENANT_OVERRIDE = "common"

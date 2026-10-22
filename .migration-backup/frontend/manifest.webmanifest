@@ -1,0 +1,25 @@
+{
+  "name": "Concap AI",
+  "short_name": "Concap",
+  "description": "Conference booth conversation capture with offline support.",
+  "start_url": "/booth",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0C0C0E",
+  "theme_color": "#0C0C0E",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' fill='%230C0C0E'/><g transform='translate(60 60) scale(0.66) translate(-60 -60)'><path d='M93.9 38.8 A40 40 0 1 0 93.9 81.2' fill='none' stroke='%23FAF9F6' stroke-width='15' stroke-linecap='round'/><circle cx='60' cy='60' r='14' fill='%23FF4438'/></g></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' fill='%230C0C0E'/><g transform='translate(60 60) scale(0.66) translate(-60 -60)'><path d='M93.9 38.8 A40 40 0 1 0 93.9 81.2' fill='none' stroke='%23FAF9F6' stroke-width='15' stroke-linecap='round'/><circle cx='60' cy='60' r='14' fill='%23FF4438'/></g></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

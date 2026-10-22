@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Long capture — Concap AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/auth.js"></script>
+  <script src="/static/appnav.js"></script>
+  <script src="/static/voice-reminder.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+  <style>
+    .concap-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Fraunces', 'Times New Roman', serif;
+      font-size: 22px; font-weight: 400;
+      letter-spacing: -0.02em; font-style: italic;
+      color: #fff;
+    }
+    .concap-logo-mark {
+      width: 26px; height: 26px; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .concap-logo-mark::before {
+      content: ''; position: absolute; inset: 0;
+      border: 1.5px solid #FF5B2E; border-radius: 50%;
+    }
+    .concap-logo-mark::after {
+      content: ''; width: 8px; height: 8px;
+      background: #FF5B2E; border-radius: 50%;
+      animation: concapPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes concapPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand" style="margin-bottom:24px;">
+        <div class="concap-logo">
+          <div class="concap-logo-mark"></div>
+          Concap AI
+        </div>
+      </div>
+
+      <div class="nav-section">Insights</div>
+      <a class="nav-item" href="/dashboard"><span class="icon">◧</span> Dashboard</a>
+      <a class="nav-item" href="/transcribe"><span class="icon">✎</span> Quick transcribe</a>
+      <div class="nav-section">CRM</div>
+      <a class="nav-item" href="/scan"><span class="icon">⧈</span> Scan card</a>
+      <a class="nav-item" href="/companies"><span class="icon">▦</span> Companies</a>
+      <a class="nav-item" href="/contacts"><span class="icon">◰</span> Contacts</a>
+
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" href="/integrations"><span class="icon">⚡</span> Integrations</a>
+
+      <div class="footer">
+        <div class="row" style="margin-bottom: 10px;">
+          <span class="dot"></span>
+          <span>local server</span>
+        </div>
+        <div class="account">
+          <span class="avatar">@</span>
+          <span class="email" id="auth-email">—</span>
+        </div>
+        <a class="logout" id="auth-logout">Sign out</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <div class="page-header">
+          <div>
+            <h1>Multi-conversation</h1>
+            <div class="subtitle" id="event-subtitle">Upload one long recording — AI transcribes it, splits it into per-visitor conversations, and files each under your event &amp; day.</div>
+          </div>
+        </div>
+
+        <div id="alert"></div>
+
+        <!-- SETUP + UPLOAD (single step) -->
+        <section class="card" id="card-setup">
+          <h2>Set up &amp; upload</h2>
+          <p class="muted" style="margin-bottom: 16px;">
+            One continuous recording — typically a full booth day from a Zoom H-series, Sony ICD, or any standalone recorder.
+            Fill in the details, drop the file, and AI transcribes it, splits it into per-visitor conversations, and files each one. You review before anything is saved.
+          </p>
+          <div class="row">
+            <div>
+              <label for="s-name">Title (optional)</label>
+              <input id="s-name" type="text" placeholder="e.g. Day 1 — morning" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <div>
+              <label for="s-event">Event</label>
+              <select id="s-event"><option value="">— No event —</option></select>
+              <div class="muted" style="font-size:12px;margin-top:6px;">
+                <a href="#" id="s-new-event">+ New event</a>
+              </div>
+            </div>
+            <div>
+              <label for="s-day">Day</label>
+              <select id="s-day" disabled><option value="">— Pick an event first —</option></select>
+              <div class="muted" style="font-size:12px;margin-top:6px;">
+                <a href="#" id="s-add-day">+ Add another day</a>
+              </div>
+            </div>
+          </div>
+          <div class="row full" style="margin-top:14px;">
+            <div>
+              <label for="s-audio">Audio file (.wav .mp3 .m4a .webm .ogg .flac, up to 500 MB)</label>
+              <div id="lc-dropzone" class="dropzone" tabindex="0" role="button" aria-label="Drop an audio file or click to browse">
+                <div class="dz-icon">⇧</div>
+                <div class="dz-title"><strong>Drag &amp; drop</strong> the recording here</div>
+                <div class="dz-sub">or <span class="dz-link">click to browse</span></div>
+                <div class="dz-file muted" id="s-file-name">No file selected yet</div>
+                <input id="s-audio" type="file" accept="audio/*" class="dz-input-hidden" />
+              </div>
+            </div>
+          </div>
+          <p class="muted" style="font-size:12px;margin-top:10px;">
+            As soon as you add a recording, processing starts automatically — AI finds the
+            visitors, splits the conversations, and analyzes each one. Every conversation is
+            filed under the selected event &amp; day.
+          </p>
+          <div class="button-row">
+            <button id="btn-start" class="hidden">Start session</button>
+            <span class="muted" id="start-status" style="align-self:center;"></span>
+          </div>
+
+          <div id="lc-loader" class="t-loader hidden" aria-live="polite">
+            <div class="t-loader-card">
+              <div class="t-spinner" role="status" aria-label="Working"></div>
+              <div class="t-loader-title">Uploading recording…</div>
+              <div class="t-loader-sub">This may take a moment for long files</div>
+            </div>
+            <div class="t-progress"><div class="t-progress-bar" id="lc-progress-bar"></div></div>
+            <div class="t-loader-status muted" id="lc-loader-status">Uploading…</div>
+          </div>
+        </section>
+
+        <!-- AI PROPOSAL REVIEW + MANUAL MARKING (revealed after upload) -->
+        <section class="card hidden" id="card-markers">
+          <div class="card" style="background: var(--accent-soft); border-color: rgba(79,70,229,0.2); padding: 18px; margin-bottom: 18px;">
+            <h2 style="margin-bottom:6px;">AI is finding the visitors</h2>
+            <p class="muted" style="margin-bottom: 14px;">
+              AI transcribes the whole recording (with speaker separation), splits
+              it into visitor conversations, guesses each company, and excludes
+              internal staff chatter. It then creates and analyzes each conversation
+              automatically — no extra clicks. Once done, the results appear under
+              Processing below; you can re-run detection if needed.
+            </p>
+            <div class="button-row" style="margin-top:0;">
+              <button id="btn-auto-detect" class="secondary">Re-run AI detection</button>
+              <span class="muted" id="auto-status" style="align-self:center;"></span>
+            </div>
+          </div>
+
+          <div id="proposal-wrap" class="hidden" style="margin-bottom:20px;">
+            <h2>AI-proposed sessions — review &amp; confirm</h2>
+            <p class="muted" style="margin-bottom:12px;">
+              Untick anything that isn't a real visitor. Edit company / name / times as needed.
+              Staff-only blocks are excluded by default.
+            </p>
+            <div class="card flush" style="margin-bottom:14px;">
+              <div class="table-scroll">
+              <table class="compact" id="proposal-table">
+                <thead>
+                  <tr><th>Use</th><th>Company</th><th>Visitor name</th><th>Start</th><th>End</th><th>Topics</th><th>Kind</th></tr>
+                </thead>
+                <tbody id="proposal-body"></tbody>
+              </table>
+              </div>
+            </div>
+            <div class="button-row" style="margin-top:0;">
+              <button id="btn-confirm">Confirm &amp; create records</button>
+              <span class="muted" id="confirm-status" style="align-self:center;"></span>
+            </div>
+          </div>
+
+          <h2>…or mark each visitor manually</h2>
+          <p class="muted" style="margin-bottom: 14px;">
+            Scrub the audio. At the start of each conversation, fill in the visitor's details and tap <strong>Set start</strong>; at the end, tap <strong>Set end</strong>. Repeat for every visitor.
+          </p>
+
+          <audio id="audio-player" controls preload="metadata" style="margin-bottom: 16px;"></audio>
+
+          <div class="row cols-3">
+            <div>
+              <label>Current position</label>
+              <input id="cur-position" type="text" readonly />
+            </div>
+            <div>
+              <label>Audio duration</label>
+              <input id="cur-duration" type="text" readonly />
+            </div>
+            <div>
+              <label>Markers so far</label>
+              <input id="marker-count" type="text" readonly value="0" />
+            </div>
+          </div>
+
+          <div class="card" style="background: var(--surface-alt); padding: 18px; margin-bottom: 16px;">
+            <h3>Add a visitor</h3>
+            <div class="row">
+              <div>
+                <label for="v-name">Visitor name</label>
+                <input id="v-name" type="text" placeholder="e.g. Rajesh Patil" />
+              </div>
+              <div>
+                <label for="v-company">Company</label>
+                <input id="v-company" type="text" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="v-email">Email</label>
+                <input id="v-email" type="email" />
+              </div>
+              <div>
+                <label for="v-phone">Phone</label>
+                <input id="v-phone" type="tel" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="v-industry">Industry</label>
+                <input id="v-industry" type="text" />
+              </div>
+              <div>
+                <label for="v-interest">Interest category</label>
+                <input id="v-interest" type="text" />
+              </div>
+            </div>
+            <div class="button-row">
+              <button id="btn-set-start">Set start at current position</button>
+              <button class="secondary" id="btn-set-end">Set end at current position</button>
+              <button class="ghost" id="btn-clear-form">Clear form</button>
+            </div>
+          </div>
+
+          <h2>Markers</h2>
+          <div class="card flush" style="margin-bottom: 18px;">
+            <div class="table-scroll">
+            <table class="compact" id="marker-table">
+              <thead>
+                <tr><th>Type</th><th>Timestamp</th><th>Visitor</th><th>Company</th><th></th></tr>
+              </thead>
+              <tbody id="marker-body"><tr><td colspan="5" class="muted">No markers yet.</td></tr></tbody>
+            </table>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="btn-process">Process session → split + analyze</button>
+            <button class="secondary" id="btn-refresh">Refresh status</button>
+          </div>
+        </section>
+
+        <!-- STEP 4: PROCESSED -->
+        <section class="card hidden" id="card-processed">
+          <h2>Processing</h2>
+          <div id="processed-body"></div>
+          <div class="button-row">
+            <a href="/dashboard" class="btn">View dashboard &rarr;</a>
+            <button class="secondary" id="btn-refresh-2">Refresh</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/long-capture.js"></script>
+</body>
+</html>

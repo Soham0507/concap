@@ -1,0 +1,157 @@
+Meeting 1: LED Display & Cube Discussion
+Participants
+Peak Technologies representative
+Industry attendee/vendor
+Key Discussion
+Ownership and construction of a large LED cube display.
+CVS Studios owns the structure.
+Peak Technologies owns the LED technology.
+Discussion about new 1.2mm LED products, flexible LED tiles, radius corners, and floor-capable LED systems.
+Comparison with competitor solutions and sourcing models.
+Outcome
+Interest shown in Peak's proprietary LED inventory.
+Discussion around future flexible LED installations and custom shapes.
+Meeting 2: Agency Strategy & Partner Network
+Participants
+Peak representative
+Experiential strategist
+Key Discussion
+Role of agencies such as Public School and Czarnowski.
+Digital strategy vs fabrication responsibilities.
+Vendor selection process.
+Use of outsourced production teams.
+Collaboration opportunities.
+Outcome
+Better understanding of agency ecosystem.
+Potential future collaboration.
+Meeting 3: Booth Analytics & AI Recording
+Participants
+Internal team members
+Key Discussion
+Testing an AI-powered audio recorder.
+Capturing:
+Conversation duration
+Engagement time
+Visitor analytics
+Multiple simultaneous conversations
+Goal is real-time cloud analysis.
+Action Items
+Continue testing.
+Evaluate accuracy in noisy environments.
+Explore automated conversation analytics.
+Meeting 4: Badge Recognition & Interactive Experience
+Participants
+Peak representative
+Technical team
+Key Discussion
+Visitor badge scanning issues.
+OCR confidence scores.
+Improving user experience by:
+Adding approval/confirmation buttons.
+Better handling of low-confidence matches.
+Optimizing camera placement.
+Action Items
+Review UI enhancements.
+Investigate confirmation workflow.
+Meeting 5: Boeing Experience Center Opportunity
+Participants
+Boeing representative
+Peak representative
+Key Discussion
+Interactive displays for briefing centers.
+LED mesh technology.
+Half-sphere immersive display concepts.
+Transparent display applications.
+Innovation center installations.
+Opportunities
+Boeing briefing centers.
+Future experiential installations.
+Potential content and hardware partnerships.
+Meeting 6: Event & Air Show Discussion (EAA)
+Participants
+Boeing representative
+Peak representative
+Key Discussion
+EAA Oshkosh aviation event.
+Existing Boeing activations.
+Interactive technologies:
+Magic mirror
+AI-generated experiences
+Transparent touch displays
+Outcome
+Invitation to future EAA engagement.
+Networking relationship established.
+Meeting 7: Internal Sales & RFP Discussion
+Participants
+Internal team
+Key Discussion
+New RFP opportunities.
+Client requests for:
+Arcade-style button activations
+Interactive displays
+Video triggering systems
+Technical feasibility review.
+Action Items
+Confirm scope with client.
+Consult technical team.
+Engage partner stakeholders.
+Meeting 8: TravisMathew Event Marketing Opportunity
+Participants
+Event Manager from TravisMathew
+Peak representative
+Key Discussion
+Large brand events.
+Retail activation experiences.
+Interactive engagement ideas.
+Golf-themed experiences.
+Opportunities
+PGA Show activations.
+Interactive golf games.
+Digital attendee engagement tools.
+Follow-up
+Exchange contact information.
+Schedule future discussion.
+Meeting 9: Manufacturing Events (SME)
+Participants
+Society of Manufacturing Engineers representative
+Peak representative
+Key Discussion
+Manufacturing conferences across US, Canada, and Mexico.
+Need for attendee engagement.
+Interactive experiences for exhibitors.
+Opportunity
+Access to approximately 1,400 exhibitors.
+Vendor partnership possibilities.
+AV and experiential solutions for future events.
+Follow-up
+Send company information.
+Explore exhibitor partnership program.
+Meeting 10: Experiential Agency (Northwest Arkansas)
+Participants
+Agency representative
+Peak representative
+Key Discussion
+Outdoor LED screens.
+Coachella-inspired installations.
+Double-sided displays.
+Curved and weatherproof LED solutions.
+Opportunity
+Retail and brand activation projects.
+Large retailer programs (including Walmart-related work).
+Follow-up
+Connect via LinkedIn.
+Share outdoor LED options.
+Meeting 11: Dominican Republic Agency
+Participants
+Experiential marketing agency representative
+Peak representative
+Key Discussion
+Product launches.
+Corporate anniversaries.
+Interactive branded experiences.
+International project delivery.
+Opportunity
+Agency partnership in the Dominican Republic.
+Export of experiential solutions internationally.
+Follow-up
+Share portfolio and contact information

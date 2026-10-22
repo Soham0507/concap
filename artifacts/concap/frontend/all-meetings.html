@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>All Meetings — Concap AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/auth.js"></script>
+  <script src="/static/appnav.js"></script>
+  <script src="/static/voice-reminder.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+  <style>
+    .concap-logo { display:flex; align-items:center; gap:10px; font-family:'Fraunces', serif; font-size:22px; font-weight:400; letter-spacing:-0.02em; font-style:italic; color:#fff; }
+    .concap-logo-mark { width:26px; height:26px; position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .concap-logo-mark::before { content:''; position:absolute; inset:0; border:1.5px solid #FF5B2E; border-radius:50%; }
+    .concap-logo-mark::after { content:''; width:8px; height:8px; background:#FF5B2E; border-radius:50%; animation:concapPulse 2.2s ease-in-out infinite; }
+    @keyframes concapPulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.7);} }
+
+    .meet-subtabs { display:flex; gap:2px; margin-bottom:22px; border-bottom:1px solid var(--border); }
+    .meet-subtabs a { display:inline-flex; align-items:center; gap:7px; padding:11px 4px; margin-right:22px; color:var(--text-muted); font-size:13.5px; font-weight:500; text-decoration:none; border-bottom:2px solid transparent; transition: all .14s ease; }
+    .meet-subtabs a:hover { color:var(--text); }
+    .meet-subtabs a.active { color:var(--text); border-bottom-color:var(--accent); }
+
+    /* --- Toolbar: search + sort + Filters popover ------------------------- */
+    .meet-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:12px; }
+    .am-search { position:relative; flex:1 1 260px; min-width:200px; }
+    .am-search input { width:100%; padding:9px 12px 9px 34px; background:var(--surface); }
+    .am-search .si { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-subtle); font-size:14px; pointer-events:none; }
+    .mt-sort { width:auto; min-width:150px; padding:9px 30px 9px 12px; font-size:13px; background:var(--surface); flex:0 0 auto; }
+
+    .mt-filters { position:relative; flex:0 0 auto; }
+    .mt-filters > summary { list-style:none; display:inline-flex; align-items:center; gap:7px; padding:9px 14px; border-radius:var(--radius); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; font-weight:600; cursor:pointer; user-select:none; transition: all .14s ease; }
+    .mt-filters > summary::-webkit-details-marker { display:none; }
+    .mt-filters > summary:hover { background:var(--surface-hover); border-color:var(--border-strong); }
+    .mt-filters[open] > summary { border-color:var(--accent); color:var(--accent-soft-text); }
+    .mt-filters-badge { display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:var(--accent); color:#fff; font-size:10.5px; font-weight:700; }
+    .mt-filters-caret { font-size:9px; color:var(--text-subtle); transition: transform .14s ease; }
+    .mt-filters[open] .mt-filters-caret { transform:rotate(180deg); }
+
+    .mt-pop { position:absolute; right:0; top:calc(100% + 8px); z-index:20; width:300px; padding:16px; border-radius:var(--radius-lg); border:1px solid var(--border-strong); background:var(--surface-elevated); box-shadow:0 16px 40px rgba(0,0,0,.45); }
+    .mt-pop-group { margin-bottom:16px; }
+    .mt-pop-group:last-of-type { margin-bottom:0; }
+    .mt-pop-label { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; margin-bottom:8px; }
+    .mt-seg { display:flex; flex-wrap:wrap; gap:6px; }
+    .mt-opt { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:999px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text-muted); font-size:12px; font-weight:600; cursor:pointer; transition: all .14s ease; }
+    .mt-opt:hover { background:var(--surface-hover); color:var(--text); }
+    .mt-opt.active { background:var(--accent-soft); color:var(--accent-soft-text); border-color:var(--accent); }
+    .mt-opt .mf-dot.active-dot { background:currentColor; }
+    .mt-pop-actions { display:flex; align-items:center; justify-content:space-between; margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+    .mt-pop-clear { background:none; border:none; color:var(--text-muted); font-size:12.5px; font-weight:600; cursor:pointer; padding:0; }
+    .mt-pop-clear:hover { color:var(--danger-soft-text); }
+    .mt-pop-done { padding:7px 16px; }
+
+    .mf-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:var(--text-subtle); }
+    .mf-dot.src-intelligence { background:var(--accent-soft-text); }
+    .mf-dot.src-imported { background:var(--text-muted); }
+    .mf-dot.src-zoom, .mf-dot.src-microsoft_teams { background:var(--info-soft-text); }
+    .mf-dot.src-google_meet { background:var(--success-soft-text); }
+
+    .mf-active { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-bottom:14px; }
+    .mf-active-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 6px 4px 11px; border-radius:999px; background:var(--accent-soft); color:var(--accent-soft-text); font-size:11.5px; font-weight:600; }
+    .mf-active-chip button { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:rgba(255,255,255,.08); border:none; color:inherit; cursor:pointer; font-size:11px; line-height:1; padding:0; }
+    .mf-active-chip button:hover { background:rgba(255,255,255,.18); }
+    .mf-active-clear { background:none; border:none; color:var(--text-subtle); font-size:11.5px; font-weight:600; cursor:pointer; text-decoration:underline; padding:0; }
+
+    .am-resultbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding:0 2px; }
+    .am-count { color:var(--text-muted); font-size:12.5px; font-weight:500; }
+
+    /* --- Results: row-card list (replaces the old table) ------------------ */
+    .am-card { padding:0; overflow:visible; background:transparent; border:none; box-shadow:none; }
+    .am-list { display:flex; flex-direction:column; gap:8px; }
+    .am-row { display:flex; align-items:center; gap:14px; padding:13px 16px; border-radius:var(--radius-lg); border:1px solid var(--border); background:var(--surface); cursor:pointer; transition: border-color .14s ease, background .14s ease, transform .14s ease; }
+    .am-row:hover { background:var(--surface-hover); border-color:var(--border-strong); transform:translateY(-1px); }
+    .am-row-ic { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0; }
+    .am-row-ic.src-intelligence { background:var(--accent-soft); color:var(--accent-soft-text); }
+    .am-row-ic.src-imported { background:var(--surface-hover); color:var(--text-muted); }
+    .am-row-ic.src-zoom, .am-row-ic.src-microsoft_teams { background:var(--info-soft); color:var(--info-soft-text); }
+    .am-row-ic.src-google_meet { background:var(--success-soft); color:var(--success-soft-text); }
+    .am-row-body { flex:1; min-width:0; }
+    .am-title { font-weight:500; color:var(--text); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .am-row-meta { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:4px; color:var(--text-muted); font-size:12px; }
+    .am-row-meta span { white-space:nowrap; }
+    .am-row-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .am-chevron { color:var(--text-subtle); font-size:15px; }
+    @media (max-width:640px) { .am-row-meta .am-hide-sm { display:none; } }
+
+    /* Source + status pills */
+    .pill { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; text-transform:capitalize; white-space:nowrap; }
+    .pill.src-intelligence { background:var(--accent-soft); color:var(--accent-soft-text); }
+    .pill.src-imported { background:var(--surface-alt); color:var(--text-muted); border:1px solid var(--border); }
+    .pill.src-zoom, .pill.src-microsoft_teams { background:var(--info-soft); color:var(--info-soft-text); }
+    .pill.src-google_meet { background:var(--success-soft); color:var(--success-soft-text); }
+    .pill.st-queued, .pill.st-running, .pill.st-processing { background:var(--warning-soft); color:var(--warning-soft-text); }
+    .pill.st-completed { background:var(--success-soft); color:var(--success-soft-text); }
+    .pill.st-failed { background:var(--danger-soft); color:var(--danger-soft-text); }
+    .pill.st-scheduled { background:var(--info-soft); color:var(--info-soft-text); }
+
+    /* Import Conversation panel — collapsible via <details> so it no longer
+       dominates the page; the filters/results below get top billing. */
+    .ic-card { margin-bottom:16px; padding:0; }
+    .ic-card > summary { list-style:none; display:flex; align-items:center; gap:10px; padding:16px 20px; cursor:pointer; user-select:none; }
+    .ic-card > summary::-webkit-details-marker { display:none; }
+    .ic-card > summary:hover { background:var(--surface-hover); }
+    .ic-card[open] > summary { border-bottom:1px solid var(--border); }
+    .ic-summary-ic { width:30px; height:30px; border-radius:9px; background:var(--accent-soft); color:var(--accent-soft-text); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+    .ic-summary-caret { margin-left:auto; color:var(--text-subtle); font-size:11px; transition: transform .16s ease; }
+    .ic-card[open] .ic-summary-caret { transform:rotate(180deg); }
+    .ic-body { padding:18px 20px 20px; }
+    .ic-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; margin-bottom:14px; }
+    .ic-head strong { font-size:15px; }
+    /* Source picker: a compact inline row of icon+label items (no box/border
+       — every way to add a conversation visible at once, minimal footprint). */
+    .ic-source-grid { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:16px; }
+    .ic-source-tile { flex:0 0 auto; position:relative; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:none; background:transparent; color:var(--text-muted); white-space:nowrap; cursor:pointer; transition: all .14s ease; }
+    .ic-source-tile:hover { background:var(--surface-hover); color:var(--text); }
+    .ic-source-tile.active { background:var(--accent-soft); color:var(--accent-soft-text); }
+    .ic-source-ic { font-size:13px; font-weight:700; line-height:1; width:14px; display:inline-flex; align-items:center; justify-content:center; }
+    .ic-source-label { font-size:12.5px; font-weight:600; line-height:1.2; }
+    .ic-source-tile .ic-dot { width:6px; height:6px; border-radius:50%; background:var(--border); flex-shrink:0; }
+    .ic-source-tile .ic-dot.on { background:var(--success); }
+    .ic-pane { display:none; }
+    .ic-pane.active { display:block; }
+    .ic-note { color:var(--text-muted); font-size:13.5px; line-height:1.6; }
+    .ic-note a { color:var(--accent-soft-text); font-weight:500; text-decoration:none; }
+    .ic-note a:hover { text-decoration:underline; }
+
+    .field { margin-bottom:12px; }
+    .field label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; margin-bottom:6px; }
+    .field input { width:100%; padding:9px 12px; }
+    .dropzone { border:1.5px dashed var(--border); border-radius:12px; padding:24px 16px; text-align:center; color:var(--text-muted); cursor:pointer; transition: border-color .15s ease, background .15s ease; }
+    .dropzone:hover, .dropzone.drag { border-color:var(--accent); background:var(--accent-soft); }
+    .dropzone .dz-ic { font-size:28px; opacity:.5; display:block; margin-bottom:8px; }
+    .ic-rec { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:8px; }
+    .ic-rec-ind { display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--danger, #dc2626); font-variant-numeric:tabular-nums; }
+    .rec-blink { width:9px; height:9px; border-radius:50%; background:var(--danger, #dc2626); animation:recBlink 1s steps(2, start) infinite; }
+    @keyframes recBlink { 50% { opacity:0; } }
+    .ic-file-name { font-size:13px; margin:10px 0; color:var(--text-muted); }
+    .ic-file-name.has-file { color:var(--text); font-weight:500; }
+    .progress { height:6px; border-radius:4px; background:var(--surface-alt); overflow:hidden; }
+    .progress > span { display:block; height:100%; width:0; background:var(--accent); transition: width .35s ease; }
+    .ic-out { margin-top:12px; font-size:13.5px; }
+    .ic-out .ok { color:var(--success-soft-text); }
+    .ic-out .err { background:var(--danger-soft); color:var(--danger-soft-text); padding:9px 12px; border-radius:9px; }
+
+    .am-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:12px; padding:70px 24px; color:var(--text-muted); }
+    .am-empty-ic { font-size:34px; opacity:.5; }
+    .muted { color:var(--text-muted); }
+    .hidden { display:none !important; }
+    @media (max-width:720px) { .am-hide-sm { display:none; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand" style="margin-bottom:24px;">
+        <div class="concap-logo"><div class="concap-logo-mark"></div>Concap AI</div>
+      </div>
+      <div class="nav-section">Insights</div>
+      <a class="nav-item" href="/dashboard"><span class="icon">◧</span> Dashboard</a>
+      <a class="nav-item" href="/transcribe"><span class="icon">✎</span> Quick transcribe</a>
+      <div class="nav-section">CRM</div>
+      <a class="nav-item" href="/scan"><span class="icon">⧈</span> Scan card</a>
+      <a class="nav-item" href="/companies"><span class="icon">▦</span> Companies</a>
+      <a class="nav-item" href="/contacts"><span class="icon">◰</span> Contacts</a>
+
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" href="/integrations"><span class="icon">⚡</span> Integrations</a>
+
+      <div class="footer">
+        <div class="row" style="margin-bottom:10px;"><span class="dot"></span><span id="org-name">—</span></div>
+        <div class="account"><span class="avatar">@</span><span class="email" id="auth-email">—</span></div>
+        <a class="logout" id="auth-logout">Sign out</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <nav class="meet-subtabs">
+          <a href="/all-meetings" class="active" aria-current="page"><span>▤</span> All Meetings</a>
+          <a href="/meetings"><span>◰</span> Meeting Intelligence</a>
+          <a href="/imported-meetings"><span>⇩</span> Imported &amp; Providers</a>
+        </nav>
+        <div class="page-header">
+          <div>
+            <h1>All Meetings</h1>
+            <div class="subtitle">Every meeting from all sources — intelligence, imported, and provider-scheduled — in one place.</div>
+          </div>
+        </div>
+
+        <details class="card ic-card" id="ic-details">
+          <summary>
+            <span class="ic-summary-ic">⬆</span>
+            <div>
+              <div style="font-weight:500;font-size:14px;">Import Conversation</div>
+              <div class="muted" style="font-size:12.5px;">Capture or bring in a conversation from any source</div>
+            </div>
+            <span class="ic-summary-caret">▾</span>
+          </summary>
+          <div class="ic-body">
+          <div class="ic-source-grid" id="ic-select" role="group" aria-label="Add a conversation via">
+            <button class="ic-source-tile" data-tab="manual" type="button">
+              <span class="ic-source-ic">✎</span><span class="ic-source-label">Manual</span>
+            </button>
+            <button class="ic-source-tile active" data-tab="audio" type="button">
+              <span class="ic-source-ic">●</span><span class="ic-source-label">Audio</span>
+            </button>
+            <button class="ic-source-tile" data-tab="zoom" type="button">
+              <span class="ic-source-ic">Z</span><span class="ic-source-label">Zoom</span><span class="ic-dot" data-prov="zoom"></span>
+            </button>
+            <button class="ic-source-tile" data-tab="google_meet" type="button">
+              <span class="ic-source-ic">G</span><span class="ic-source-label">Google Meet</span><span class="ic-dot" data-prov="google_meet"></span>
+            </button>
+            <button class="ic-source-tile" data-tab="ms_teams" type="button">
+              <span class="ic-source-ic">T</span><span class="ic-source-label">Teams</span><span class="ic-dot" data-prov="ms_teams"></span>
+            </button>
+            <button class="ic-source-tile" data-tab="discord" type="button">
+              <span class="ic-source-ic">D</span><span class="ic-source-label">Discord</span>
+            </button>
+            <button class="ic-source-tile" data-tab="intelligence" type="button">
+              <span class="ic-source-ic">⇪</span><span class="ic-source-label">Bulk import</span>
+            </button>
+          </div>
+
+          <div class="ic-pane" data-pane="manual">
+            <p class="ic-note">Paste a transcript or type meeting notes by hand to generate structured minutes. <a href="/meetings">Open Meeting Intelligence →</a></p>
+          </div>
+
+          <div class="ic-pane active" data-pane="audio">
+            <div class="ic-rec">
+              <button class="btn-primary" id="ic-rec-start" type="button">● Record audio</button>
+              <button class="btn-ghost hidden" id="ic-rec-stop" type="button">■ Stop</button>
+              <button class="btn-ghost hidden" id="ic-rec-discard" type="button">Discard</button>
+              <span class="ic-rec-ind hidden" id="ic-rec-indicator"><span class="rec-blink"></span><span id="ic-rec-time">00:00</span></span>
+            </div>
+            <div class="ic-note" id="ic-rec-status" style="margin-bottom:10px;"></div>
+            <div class="dropzone" id="ic-dropzone" tabindex="0" role="button" aria-label="Upload audio file">
+              <span class="dz-ic">⬆</span>
+              <span>Drop an audio file (.mp3, .m4a, .wav, .webm…) here, or click to browse.</span>
+              <input id="ic-file" type="file" class="hidden" accept=".wav,.mp3,.m4a,.mp4,.webm,.ogg,.flac,audio/*" />
+            </div>
+            <div class="ic-file-name" id="ic-file-name">No file selected yet</div>
+            <div class="field">
+              <label for="ic-title">Title (optional)</label>
+              <input id="ic-title" type="text" placeholder="e.g. Booth chat with Acme" />
+            </div>
+            <button class="btn-primary" id="ic-transcribe" type="button" style="width:100%;">Transcribe &amp; save</button>
+            <div class="progress hidden" id="ic-progress" style="margin-top:12px;"><span id="ic-progress-bar"></span></div>
+            <div class="ic-out" id="ic-out"></div>
+          </div>
+
+          <div class="ic-pane" data-pane="zoom"><div class="ic-note ic-prov-body" data-prov="zoom">Loading…</div></div>
+          <div class="ic-pane" data-pane="google_meet"><div class="ic-note ic-prov-body" data-prov="google_meet">Loading…</div></div>
+          <div class="ic-pane" data-pane="ms_teams"><div class="ic-note ic-prov-body" data-prov="ms_teams">Loading…</div></div>
+
+          <div class="ic-pane" data-pane="discord">
+            <p class="ic-note">Discord conversation import is coming soon.</p>
+          </div>
+
+          <div class="ic-pane" data-pane="intelligence">
+            <p class="ic-note">Bulk-upload transcripts or audio to generate cross-meeting minutes and summaries. <a href="/meetings">Open Meeting Intelligence →</a></p>
+          </div>
+          </div>
+        </details>
+
+        <div class="meet-toolbar">
+          <div class="am-search">
+            <span class="si">⌕</span>
+            <input id="am-q" type="search" placeholder="Search meetings…" autocomplete="off" />
+          </div>
+          <select id="am-sort" class="mt-sort">
+            <option value="date_desc">Newest first</option>
+            <option value="date_asc">Oldest first</option>
+            <option value="title_asc">Title A–Z</option>
+          </select>
+          <details class="mt-filters" id="am-filters-pop">
+            <summary>
+              <span>Filters</span>
+              <span class="mt-filters-badge hidden" id="am-filter-badge">0</span>
+              <span class="mt-filters-caret">▾</span>
+            </summary>
+            <div class="mt-pop">
+              <div class="mt-pop-group">
+                <div class="mt-pop-label">Source</div>
+                <div class="mt-seg" id="am-chips" role="group" aria-label="Filter by source">
+                  <button class="mt-opt active" data-source="" type="button">All</button>
+                  <button class="mt-opt" data-source="intelligence" type="button"><span class="mf-dot src-intelligence"></span>Intelligence</button>
+                  <button class="mt-opt" data-source="imported" type="button"><span class="mf-dot src-imported"></span>Imported</button>
+                  <button class="mt-opt" data-source="zoom" type="button"><span class="mf-dot src-zoom"></span>Zoom</button>
+                  <button class="mt-opt" data-source="google_meet" type="button"><span class="mf-dot src-google_meet"></span>Google Meet</button>
+                  <button class="mt-opt" data-source="microsoft_teams" type="button"><span class="mf-dot src-microsoft_teams"></span>Teams</button>
+                </div>
+              </div>
+              <div class="mt-pop-group">
+                <div class="mt-pop-label">Status</div>
+                <div class="mt-seg" id="am-status-seg" role="group" aria-label="Filter by status">
+                  <button class="mt-opt active" data-status="" type="button">Any</button>
+                  <button class="mt-opt" data-status="scheduled" type="button">Scheduled</button>
+                  <button class="mt-opt" data-status="processing" type="button">Processing</button>
+                  <button class="mt-opt" data-status="completed" type="button">Completed</button>
+                  <button class="mt-opt" data-status="failed" type="button">Failed</button>
+                </div>
+              </div>
+              <div class="mt-pop-group">
+                <div class="mt-pop-label">Date</div>
+                <div class="mt-seg" id="am-range-seg" role="group" aria-label="Filter by date">
+                  <button class="mt-opt active" data-range="" type="button">Any time</button>
+                  <button class="mt-opt" data-range="today" type="button">Today</button>
+                  <button class="mt-opt" data-range="7d" type="button">7 days</button>
+                  <button class="mt-opt" data-range="30d" type="button">30 days</button>
+                  <button class="mt-opt" data-range="month" type="button">This month</button>
+                </div>
+              </div>
+              <div class="mt-pop-actions">
+                <button class="mt-pop-clear" id="am-clear" type="button">Clear all</button>
+                <button class="btn-primary mt-pop-done" id="am-filters-done" type="button">Done</button>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="mf-active hidden" id="am-active"></div>
+
+        <div class="am-resultbar">
+          <span class="am-count" id="am-count"></span>
+        </div>
+
+        <section class="card am-card">
+          <div class="am-list" id="am-list"></div>
+          <div id="am-empty" class="am-empty">
+            <div class="am-empty-ic">▤</div>
+            <p id="am-empty-text">Loading meetings…</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/static/all-meetings.js"></script>
+</body>
+</html>

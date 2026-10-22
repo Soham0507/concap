@@ -1,0 +1,188 @@
+Implement the meeting invitation system using the same architecture as our existing application. Do not build a single invitation flow that depends on Google for every provider.
+
+Each meeting provider should use its own native invitation mechanism where available, and only send emails from our backend when the provider does not support attendee invitations.
+
+Overall Architecture
+
+The invitation flow should be provider-specific:
+
+Google Meet
+
+When creating a Google Meet meeting:
+
+Create a Google Calendar event.
+Add all attendee email addresses to the calendar event.
+Generate the Google Meet conference link using conferenceData.
+Use sendUpdates=all when creating or updating the calendar event.
+
+Google Calendar should automatically send calendar invitations and update emails to all attendees.
+
+Our backend should not send invitation emails for Google Meet.
+
+Microsoft Teams
+
+When creating a Microsoft Teams meeting:
+
+Create a Microsoft Graph Calendar Event.
+Add all attendees.
+Configure it as an online Teams meeting.
+Let Microsoft Outlook automatically send meeting invitations.
+
+Our backend should not send invitation emails for Teams.
+
+Zoom
+
+When creating a Zoom meeting:
+
+Create the meeting using the Zoom Meetings API.
+Retrieve the join_url, meeting ID, passcode, date, and time.
+Since Zoom does not send invitations when creating meetings via API, our backend must send invitation emails.
+
+Use the application's configured email provider (Brevo or the existing email service) to send branded HTML invitation emails to every attendee.
+
+The email should include:
+
+Meeting title
+Organizer
+Date
+Time
+Time zone
+Join Zoom button
+Join URL
+Meeting ID
+Passcode (if available)
+
+Also generate and attach a valid RFC 5545 .ics calendar invitation.
+
+Updating Meetings
+
+When a meeting is updated:
+
+Google Meet
+Update the Google Calendar event.
+Continue using sendUpdates=all.
+Google should notify attendees automatically.
+Teams
+Update the Microsoft Graph calendar event.
+Microsoft should automatically send update notifications.
+Zoom
+Update the Zoom meeting.
+Detect attendee changes.
+Send updated invitation emails using the backend email service.
+Generate a new ICS file reflecting the updated meeting information.
+Backend Responsibilities
+
+The backend should determine the meeting provider before deciding how invitations are sent.
+
+Example flow:
+
+Create Meeting
+      │
+      ▼
+Detect Provider
+      │
+      ├── Google Meet
+      │       │
+      │       ▼
+      │  Google Calendar API
+      │       │
+      │       ▼
+      │ Google sends invitations
+      │
+      ├── Microsoft Teams
+      │       │
+      │       ▼
+      │ Microsoft Graph API
+      │       │
+      │       ▼
+      │ Outlook sends invitations
+      │
+      └── Zoom
+              │
+              ▼
+      Zoom Meetings API
+              │
+              ▼
+      Create Meeting
+              │
+              ▼
+      Backend Email Service
+              │
+              ▼
+      Send Invitation Emails
+Important Requirements
+
+Do not require:
+
+Google Meet connection for Zoom invitations.
+Gmail OAuth (gmail.send) to send Zoom invitations.
+Google connection when creating Teams meetings.
+
+Each provider should be completely independent.
+
+Email Service
+
+Reuse the application's existing email service (Brevo or the configured transactional email provider).
+
+Do not introduce another email provider if one already exists.
+
+ICS Calendar Attachment
+
+For backend-generated invitations (Zoom), generate an RFC 5545 .ics calendar attachment containing:
+
+UID
+DTSTART
+DTEND
+SUMMARY
+DESCRIPTION
+LOCATION (Join URL)
+ORGANIZER
+ATTENDEE(S)
+
+The attachment should be compatible with:
+
+Google Calendar
+Microsoft Outlook
+Apple Calendar
+Samsung Calendar
+Frontend
+
+The UI should remain identical regardless of provider.
+
+Users should:
+
+Select attendees.
+Create a meeting.
+Click Save/Create.
+
+The invitation process should happen automatically based on the selected meeting provider.
+
+No additional UI should be required.
+
+Error Handling
+
+Return provider-specific errors only when the provider's meeting creation fails.
+
+Do not return errors like:
+
+"Workspace has not connected Google Meet"
+
+when creating or inviting attendees for Zoom meetings.
+
+Each provider should validate only its own required connection.
+
+Expected Result
+
+After implementation:
+
+Google Meet
+Meeting created.
+Google Calendar sends invitations automatically.
+Microsoft Teams
+Meeting created.
+Outlook sends invitations automatically.
+Zoom
+Meeting created.
+Backend sends branded invitation emails with an ICS calendar attachment using the configured email provider.
+
+The three providers should operate independently while providing a consistent user experience.

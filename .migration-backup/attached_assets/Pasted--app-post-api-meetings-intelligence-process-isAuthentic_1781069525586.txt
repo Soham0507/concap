@@ -1,0 +1,374 @@
+  app.post(
+      "/api/meetings/intelligence/process",
+      isAuthenticated,
+      apiLimiter,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+          // Pre-flight: bail out with a clear actionable error if the
+          // OpenAI key isn't configured, instead of letting the worker
+          // hit a 401 from OpenAI and write a cryptic failure row.
+          const keyProblem = describeOpenAIKeyProblem();
+          if (keyProblem) {
+            return res.status(400).json({
+              error: keyProblem,
+              code: "OPENAI_KEY_NOT_CONFIGURED",
+            });
+          }
+
+          const {
+            transcript_text,
+            project_name,
+            department,
+            meeting_source,
+            meeting_date,
+            participants,
+            transcript_id,
+          } = req.body || {};
+
+          if (typeof transcript_text !== "string" || transcript_text.trim().length < 20) {
+            return res.status(400).json({
+              error: "transcript_text is required (≥20 chars)",
+            });
+          }
+          if (typeof meeting_source !== "string" || !meeting_source.trim()) {
+            return res.status(400).json({ error: "meeting_source is required" });
+          }
+
+          const safeParticipants = Array.isArray(participants)
+            ? participants.filter((p) => typeof p === "string" && p.trim()).map((p) => p.trim())
+            : [];
+
+          const doc = await processTranscript({
+            userId,
+            transcriptText: transcript_text,
+            projectName:
+              typeof project_name === "string" && project_name.trim()
+                ? project_name.trim()
+                : null,
+            department:
+              typeof department === "string" && department.trim()
+                ? department.trim()
+                : null,
+            meetingSource: meeting_source.trim(),
+            meetingDate:
+              typeof meeting_date === "string" && meeting_date.trim()
+                ? meeting_date.trim()
+                : null,
+            participants: safeParticipants,
+            transcriptId:
+              typeof transcript_id === "string" && transcript_id.trim()
+                ? transcript_id.trim()
+                : undefined,
+          });
+          res.json(doc);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] route error:", error);
+          res.status(500).json({
+            error: error?.message || "Processing failed",
+          });
+        }
+      },
+    );
+
+    app.get(
+      "/api/meetings/intelligence/documents",
+      isAuthenticated,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+          const limit = Math.min(
+            Math.max(parseInt(String(req.query.limit ?? "50"), 10) || 50, 1),
+            200,
+          );
+          const docs = await listIntelligenceDocuments(userId, limit);
+          res.json(docs);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] list error:", error);
+          res.status(500).json({ error: "Failed to list documents" });
+        }
+      },
+    );
+
+    app.get(
+      "/api/meetings/intelligence/documents/:id",
+      isAuthenticated,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+          const id = parseInt(req.params.id, 10);
+          if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: "Invalid id" });
+          }
+          const doc = await getIntelligenceDocument(userId, id);
+          // Return 404 (not 403) on ownership mismatch to prevent enumeration.
+          if (!doc) return res.status(404).json({ error: "Not found" });
+          res.json(doc);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] get error:", error);
+          res.status(500).json({ error: "Failed to fetch document" });
+        }
+      },
+    );
+
+    // Re-extract: re-queues a completed/failed document so the worker
+    // re-runs the (current) extraction prompt. The primary use case is
+    // backfilling evidence_quotes onto docs processed before that field
+    // was added — no re-upload of the transcript required.
+    app.post(
+      "/api/meetings/intelligence/documents/:id/reprocess",
+      isAuthenticated,
+      apiLimiter,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+          const keyProblem = describeOpenAIKeyProblem();
+          if (keyProblem) {
+            return res
+              .status(400)
+              .json({ error: keyProblem, code: "OPENAI_KEY_NOT_CONFIGURED" });
+          }
+
+          const id = parseInt(req.params.id, 10);
+          if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: "Invalid id" });
+          }
+          // Ownership: getIntelligenceDocument returns null if the doc
+          // belongs to another user. 404 (not 403) to prevent enumeration.
+          const existing = await getIntelligenceDocument(userId, id);
+          if (!existing) return res.status(404).json({ error: "Not found" });
+
+          // Idempotent: if the doc is already queued/processing from an
+          // earlier click, just acknowledge it. No state change needed,
+          // no error surfaced to the user — the worker is already on it.
+          if (
+            existing.status === "queued" ||
+            existing.status === "processing"
+          ) {
+            return res.json({
+              requeued: false,
+              alreadyQueued: true,
+              documentId: id,
+              status: existing.status,
+            });
+          }
+
+          const result = await reprocessDocument({ userId, documentId: id });
+          if (!result.requeued) {
+            // The window between getIntelligenceDocument and the UPDATE is
+            // tiny but real. If a competing process moved the row out of
+            // a re-processable state, fall through to a friendly response
+            // rather than a hard 409.
+            return res.json({
+              requeued: false,
+              alreadyQueued: false,
+              documentId: id,
+              status: existing.status,
+            });
+          }
+          res.json(result);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] reprocess error:", error);
+          res.status(500).json({ error: "Failed to re-extract document" });
+        }
+      },
+    );
+
+    // ── Bulk processing ────────────────────────────────────────────
+    // Accepts an array of transcripts and enqueues them as a single batch.
+    // The actual work happens in the background worker; the request returns
+    // immediately with the batch id so the UI can start polling progress.
+    //
+    // Body shape:
+    //   {
+    //     label?: string,                     // human-readable batch label
+    //     defaultMeetingSource?: string,      // used when an item omits one
+    //     metadata?: object,
+    //     transcripts: [
+    //       { transcript_text, transcript_id?, project_name?, department?,
+    //         meeting_source?, meeting_date?, participants? }
+    //     ]
+    //   }
+    app.post(
+      "/api/meetings/intelligence/batches",
+      isAuthenticated,
+      apiLimiter,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+          // Same pre-flight as the single-shot endpoint. Bail out before
+          // we write N queued rows the worker can only fail.
+          const keyProblem = describeOpenAIKeyProblem();
+          if (keyProblem) {
+            return res.status(400).json({
+              error: keyProblem,
+              code: "OPENAI_KEY_NOT_CONFIGURED",
+            });
+          }
+
+          const body = req.body || {};
+          const arr = Array.isArray(body.transcripts) ? body.transcripts : null;
+          if (!arr || arr.length === 0) {
+            return res
+              .status(400)
+              .json({ error: "transcripts must be a non-empty array" });
+          }
+          // Defensive cap so a runaway client can't enqueue a million items
+          // in one request. Real bulk uploads should chunk client-side.
+          const MAX_BULK = 2_500;
+          if (arr.length > MAX_BULK) {
+            return res.status(400).json({
+              error: `Too many transcripts in one request. Cap is ${MAX_BULK}; chunk client-side.`,
+            });
+          }
+
+          const result = await enqueueBulkTranscripts({
+            userId,
+            label: typeof body.label === "string" ? body.label : undefined,
+            defaultMeetingSource:
+              typeof body.defaultMeetingSource === "string"
+                ? body.defaultMeetingSource
+                : undefined,
+            metadata: body.metadata || undefined,
+            transcripts: arr.map((t: any) => ({
+              transcriptText: String(t?.transcript_text ?? ""),
+              transcriptId:
+                typeof t?.transcript_id === "string" ? t.transcript_id : undefined,
+              projectName:
+                typeof t?.project_name === "string" ? t.project_name : null,
+              department:
+                typeof t?.department === "string" ? t.department : null,
+              meetingSource:
+                typeof t?.meeting_source === "string"
+                  ? t.meeting_source
+                  : undefined,
+              meetingDate:
+                typeof t?.meeting_date === "string" ? t.meeting_date : null,
+              participants: Array.isArray(t?.participants)
+                ? t.participants.filter(
+                    (p: any) => typeof p === "string" && p.trim(),
+                  )
+                : [],
+            })),
+          });
+          res.status(201).json(result);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] enqueue error:", error);
+          res.status(500).json({ error: "Failed to enqueue batch" });
+        }
+      },
+    );
+
+    app.get(
+      "/api/meetings/intelligence/batches",
+      isAuthenticated,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+          const limit = Math.min(
+            Math.max(parseInt(String(req.query.limit ?? "50"), 10) || 50, 1),
+            200,
+          );
+          const batches = await listIntelligenceBatches(userId, limit);
+          res.json(batches);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] list batches error:", error);
+          res.status(500).json({ error: "Failed to list batches" });
+        }
+      },
+    );
+
+    // Retry every failed document in a batch (or, when ?all=1 is passed
+    // without a batch id, every failed document the user owns). Useful
+    // after fixing an env-level problem like a missing OpenAI key.
+    app.post(
+      "/api/meetings/intelligence/batches/:id/retry",
+      isAuthenticated,
+      apiLimiter,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+          // Don't even re-queue the rows if the key still isn't set —
+          // they'll just fail again immediately.
+          const keyProblem = describeOpenAIKeyProblem();
+          if (keyProblem) {
+            return res.status(400).json({
+              error: keyProblem,
+              code: "OPENAI_KEY_NOT_CONFIGURED",
+            });
+          }
+          const id = parseInt(req.params.id, 10);
+          if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: "Invalid id" });
+          }
+          // Ownership check: getIntelligenceBatch returns null if the batch
+          // belongs to another user, so we 404 (not 403) for enumeration.
+          const exists = await getIntelligenceBatch(userId, id);
+          if (!exists) return res.status(404).json({ error: "Not found" });
+          const result = await retryFailedDocuments({ userId, batchId: id });
+          res.json(result);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] retry error:", error);
+          res.status(500).json({ error: "Failed to retry batch" });
+        }
+      },
+    );
+
+    app.get(
+      "/api/meetings/intelligence/batches/:id",
+      isAuthenticated,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+          const id = parseInt(req.params.id, 10);
+          if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: "Invalid id" });
+          }
+          const data = await getIntelligenceBatch(userId, id);
+          if (!data) return res.status(404).json({ error: "Not found" });
+          res.json(data);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] get batch error:", error);
+          res.status(500).json({ error: "Failed to fetch batch" });
+        }
+      },
+    );
+
+    // Aggregated MOM for an entire batch: every completed doc's items
+    // merged together, with each item carrying the list of source docs
+    // (and verbatim quotes when present) that produced it. This is the
+    // "all-meetings-in-one" view the user can use to spot cross-meeting
+    // patterns. Returns same 404 shape on ownership mismatch.
+    app.get(
+      "/api/meetings/intelligence/batches/:id/summary",
+      isAuthenticated,
+      async (req: any, res) => {
+        try {
+          const userId = req.user?.dbUserId || req.user?.claims?.sub;
+          if (!userId) return res.status(401).json({ error: "Unauthorized" });
+          const id = parseInt(req.params.id, 10);
+          if (!Number.isFinite(id)) {
+            return res.status(400).json({ error: "Invalid id" });
+          }
+          const data = await getBatchSummary(userId, id);
+          if (!data) return res.status(404).json({ error: "Not found" });
+          res.json(data);
+        } catch (error: any) {
+          console.error("[meeting-intelligence] batch summary error:", error);
+          res.status(500).json({ error: "Failed to build batch summary" });
+        }
+      },
+    );
+  }

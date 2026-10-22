@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contacts — Concap AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/auth.js"></script>
+  <script src="/static/appnav.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+  <style>
+    .concap-logo { display:flex; align-items:center; gap:10px; font-family:'Fraunces', serif; font-size:22px; font-weight:400; letter-spacing:-0.02em; font-style:italic; color:#fff; }
+    .concap-logo-mark { width:26px; height:26px; position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .concap-logo-mark::before { content:''; position:absolute; inset:0; border:1.5px solid #FF5B2E; border-radius:50%; }
+    .concap-logo-mark::after { content:''; width:8px; height:8px; background:#FF5B2E; border-radius:50%; animation:concapPulse 2.2s ease-in-out infinite; }
+    @keyframes concapPulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.7);} }
+
+    .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+    .toolbar input, .toolbar select { padding:9px 12px; }
+    .toolbar #q { padding-left:36px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:13px center; }
+    .toolbar .spacer { flex:1; }
+    .toolbar .count { color:var(--text-muted); font-size:13px; font-variant-numeric:tabular-nums; }
+
+    .contact-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+    .contact-card { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; cursor:pointer; box-shadow: var(--shadow-sm); transition: border-color .18s ease, box-shadow .18s ease, transform .16s ease; overflow:hidden; }
+    .contact-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent-gradient); opacity:0; transition:opacity .18s ease; }
+    .contact-card:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .contact-card:hover::before { opacity:1; }
+    .contact-card .top { display:flex; gap:12px; align-items:flex-start; margin-bottom:10px; }
+    .contact-card .avatar-circle { width:42px; height:42px; border-radius:50%; background:var(--accent-gradient); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:15px; flex-shrink:0; box-shadow: 0 2px 8px var(--accent-glow); }
+    .contact-card h3 { margin:0 0 2px 0; font-size:15px; color:var(--text); }
+    .contact-card .sub { font-size:13px; color:var(--text-muted); }
+    .contact-card .meta { font-size:12px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; margin-top:8px; padding-top:10px; border-top:1px solid var(--border); }
+    .contact-card .badges { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+    .type-pill { font-size:10px; padding:3px 8px; border-radius:99px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+    .type-pill.lead { background:var(--warm-bg); color:var(--warm-text); }
+    .type-pill.customer { background:var(--success-soft); color:var(--success-soft-text); }
+    .type-pill.employee { background:var(--info-soft); color:var(--info-soft-text); }
+    .source-pill { font-size:10px; padding:3px 8px; border-radius:99px; background:var(--surface-alt); color:var(--text-muted); }
+
+    /* Modal — matches /companies for visual consistency */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; animation: mb-fade .15s ease; }
+    .modal-backdrop.open { display:flex; }
+    @keyframes mb-fade { from { opacity:0; } to { opacity:1; } }
+    .modal { background:var(--surface); width:min(640px, 100%); max-height:90vh; overflow:auto; border-radius:16px; box-shadow: 0 24px 64px rgba(15,23,42,.18), 0 4px 12px rgba(15,23,42,.08); border:1px solid var(--border); animation: mb-pop .2s cubic-bezier(.16,.84,.44,1); }
+    @keyframes mb-pop { from { transform: translateY(8px) scale(.985); opacity:0; } to { transform: none; opacity:1; } }
+    .modal-head { padding:22px 28px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--surface); z-index:2; }
+    .modal-head h2 { margin:0; font-size:18px; font-weight:600; letter-spacing:-.01em; color:var(--text); }
+    .modal-head .close { background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:0; line-height:1; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; transition: background .12s, color .12s; }
+    .modal-head .close:hover { background:var(--surface-alt); color:var(--text); }
+    .modal-body { padding:24px 28px; }
+    .modal-section { margin-bottom:22px; }
+    .modal-section:last-child { margin-bottom:0; }
+    .modal-section .section-title { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:12px; font-weight:600; padding-bottom:8px; border-bottom:1px solid var(--border); }
+    .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
+    @media (max-width:560px) { .modal-grid { grid-template-columns:1fr; } }
+    /* Phones: let the search + filters each take a full row (the search has a
+       240px min that otherwise squeezes the selects off-screen), drop the
+       flexible spacer, and force the card grid to a single column. */
+    @media (max-width:480px) {
+      .content .toolbar > * { flex:1 1 100%; }
+      .content .toolbar #q { min-width:0 !important; }
+      .content .toolbar .spacer { display:none; }
+      .content .contact-grid { grid-template-columns:1fr; }
+    }
+    .modal-grid .full { grid-column: 1 / -1; }
+    .modal-grid label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; font-weight:500; }
+    .modal-foot { padding:16px 28px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; position:sticky; bottom:0; background:var(--surface); z-index:2; }
+    .modal-foot .spacer { flex:1; }
+
+    .btn-primary { background:var(--accent); color:#fff; border:1px solid var(--accent); padding:9px 16px; border-radius:8px; font-weight:500; cursor:pointer; }
+    .btn-primary:hover { background:var(--accent-hover); }
+    .btn-secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); padding:9px 16px; border-radius:8px; font-weight:500; cursor:pointer; }
+    .btn-secondary:hover { background:var(--surface-alt); }
+    .btn-danger { background:var(--danger-soft); color:var(--danger-soft-text); border:1px solid var(--border); padding:9px 16px; border-radius:8px; font-weight:500; cursor:pointer; }
+    .btn-danger:hover { background:var(--danger-soft); border-color:var(--danger); color:var(--danger); }
+
+    .empty { padding:60px 20px; text-align:center; color:var(--text-muted); }
+
+    /* Linked conversations in the contact modal */
+    .cv-row { display:block; padding:11px 13px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; text-decoration:none; color:var(--text); background:var(--surface-alt); transition: border-color .15s ease, transform .12s ease; }
+    .cv-row:hover { border-color:var(--accent); transform: translateY(-1px); }
+    .cv-row:last-child { margin-bottom:0; }
+    .cv-row .cv-top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .cv-row .cv-title { font-weight:500; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .cv-row .cv-date { font-size:11px; color:var(--text-subtle); flex-shrink:0; }
+    .cv-row .cv-snip { font-size:12.5px; color:var(--text-muted); margin-top:4px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .cv-row .cv-meta { display:flex; gap:8px; align-items:center; margin-top:7px; }
+
+    /* Cards / table view toggle (segmented control). */
+    .view-toggle { display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .view-toggle .vt-btn { background:var(--surface); color:var(--text-muted); border:none; padding:8px 12px; font-size:13px; line-height:1; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+    .view-toggle .vt-btn + .vt-btn { border-left:1px solid var(--border); }
+    .view-toggle .vt-btn[aria-pressed="true"] { background:var(--accent); color:#fff; }
+    .view-toggle .vt-btn:hover:not([aria-pressed="true"]) { background:var(--surface-alt); color:var(--text); }
+
+    /* Table view — reuses the app's .table-scroll + table.compact pattern. */
+    #contact-table td { white-space:nowrap; }
+    #contact-table .avatar-circle { width:30px; height:30px; font-size:11px; box-shadow:none; }
+    #contact-table .name-cell { display:flex; align-items:center; gap:10px; }
+    #contact-table .name-cell .nm { font-weight:500; color:var(--text); }
+
+    /* Research button status line in the contact modal footer. */
+    .m-research-status { font-size:12px; color:var(--text-muted); align-self:center; }
+    .m-research-status.busy { color:var(--accent); }
+    .m-research-status.ok { color:var(--success-soft-text); }
+    .m-research-status.warn { color:var(--warning-soft-text); }
+    .m-research-status.error { color:var(--danger-soft-text); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand" style="margin-bottom:24px;">
+        <div class="concap-logo"><div class="concap-logo-mark"></div>Concap AI</div>
+      </div>
+      <div class="nav-section">Insights</div>
+      <a class="nav-item" href="/dashboard"><span class="icon">◧</span> Dashboard</a>
+      <a class="nav-item" href="/conversations"><span class="icon">▤</span> Conversations</a>
+      <a class="nav-item" href="/transcribe"><span class="icon">✎</span> Quick transcribe</a>
+      <div class="nav-section">CRM</div>
+      <a class="nav-item" href="/scan"><span class="icon">⧈</span> Scan card</a>
+      <a class="nav-item" href="/companies"><span class="icon">▦</span> Companies</a>
+      <a class="nav-item active" href="/contacts"><span class="icon">◰</span> Contacts</a>
+
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" href="/integrations"><span class="icon">⚡</span> Integrations</a>
+
+      <div class="footer">
+        <div class="row" style="margin-bottom:10px;"><span class="dot"></span><span id="org-name">—</span></div>
+        <div class="account"><span class="avatar">@</span><span class="email" id="auth-email">—</span></div>
+        <a class="logout" id="auth-logout">Sign out</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <div class="page-header">
+          <div>
+            <h1>Contacts</h1>
+            <div class="subtitle">All people you've captured — scanned, transcribed, or added manually.</div>
+          </div>
+          <div class="actions">
+            <a href="/scan" class="btn-primary" style="text-decoration:none;">+ Scan card</a>
+            <button class="btn-secondary" id="btn-new">+ Add manually</button>
+          </div>
+        </div>
+
+        <div id="alert"></div>
+
+        <div class="toolbar">
+          <input id="q" placeholder="Search name, company, email, phone…" style="min-width:240px;" />
+          <select id="type-filter">
+            <option value="">All types</option>
+            <option value="lead">Leads</option>
+            <option value="customer">Customers</option>
+            <option value="employee">Employees</option>
+          </select>
+          <select id="source-filter">
+            <option value="">All sources</option>
+            <option value="scan">Scanned</option>
+            <option value="manual">Manual</option>
+            <option value="transcription">Transcription</option>
+            <option value="plaud">Plaud recordings</option>
+          </select>
+          <label style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text-muted); cursor:pointer; user-select:none;">
+            <input id="show-synthetic" type="checkbox" style="width:auto; margin:0;" />
+            Show auto-created from transcripts &amp; recordings
+          </label>
+          <div class="spacer"></div>
+          <div class="view-toggle" role="group" aria-label="View mode">
+            <button type="button" id="view-cards" class="vt-btn" aria-pressed="true" title="Card view">▦ Cards</button>
+            <button type="button" id="view-table" class="vt-btn" aria-pressed="false" title="Table view">▤ Table</button>
+          </div>
+          <span class="count" id="count">—</span>
+        </div>
+
+        <div id="grid" class="contact-grid"></div>
+        <div id="table-wrap" class="table-scroll hidden">
+          <table class="compact" id="contact-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Designation</th>
+                <th>Type</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="contact-tbody"></tbody>
+          </table>
+        </div>
+        <div id="empty" class="empty hidden">No contacts yet. Scan a card or add one manually to get started.</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="m-title">Add contact</h2>
+        <button class="close" id="m-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <div class="section-title">Identity</div>
+          <div class="modal-grid">
+            <div><label>Full name *</label><input id="m-name" placeholder="Jane Doe" /></div>
+            <div><label>Designation</label><input id="m-designation" placeholder="Head of Sales" /></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="section-title">Contact</div>
+          <div class="modal-grid">
+            <div><label>Email</label><input id="m-email" type="email" placeholder="jane@example.com" /></div>
+            <div><label>Phone</label><input id="m-phone" placeholder="+1 555 0100" /></div>
+            <div class="full"><label>Website</label><input id="m-website" placeholder="example.com" /></div>
+            <div class="full"><label>LinkedIn URL</label><input id="m-linkedin" placeholder="linkedin.com/in/…" /></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="section-title">Company</div>
+          <div class="modal-grid">
+            <div><label>Company</label><input id="m-company" placeholder="Acme Inc." /><a id="m-company-link" class="company-deeplink hidden" href="#">View company &rarr;</a></div>
+            <div>
+              <label>Industry</label>
+              <select id="m-industry"></select>
+              <input id="m-industry-other" class="hidden" placeholder="Type industry…" style="margin-top:6px;" />
+            </div>
+            <div class="full"><label>Address</label><textarea id="m-address" rows="2" placeholder="Street, city, country"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="section-title">Classification</div>
+          <div class="modal-grid">
+            <div>
+              <label>Save as</label>
+              <select id="m-type">
+                <option value="lead">Lead</option>
+                <option value="customer">Customer</option>
+                <option value="employee">Employee</option>
+              </select>
+            </div>
+            <div><label>GST / Tax ID</label><input id="m-gst" placeholder="Optional" /></div>
+            <div class="full"><label>Notes</label><textarea id="m-notes" rows="3" placeholder="Anything worth remembering"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-section" id="m-summary-section" style="display:none;">
+          <div class="section-title">AI research</div>
+          <div id="m-summary" style="font-size:13px; line-height:1.5; color:var(--text); white-space:pre-wrap; padding:10px 12px; background:var(--surface-alt); border-radius:8px;">—</div>
+        </div>
+        <div class="modal-section" id="m-convos-section" style="display:none;">
+          <div class="section-title">Conversations</div>
+          <div id="m-convos"></div>
+        </div>
+        <details>
+          <summary style="cursor:pointer; font-size:12px; color:var(--text-muted);">Raw OCR / scan metadata</summary>
+          <div id="m-raw" style="margin-top:8px; font-family:ui-monospace,monospace; font-size:12px; white-space:pre-wrap; max-height:200px; overflow:auto; padding:10px; background:var(--surface-alt); border-radius:8px; color:var(--text-muted);">—</div>
+        </details>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-danger" id="m-delete" style="display:none;">Delete</button>
+        <button class="btn-secondary" id="m-research" style="display:none;">✦ Research</button>
+        <span id="m-research-status" class="m-research-status"></span>
+        <div class="spacer"></div>
+        <button class="btn-secondary" id="m-cancel">Cancel</button>
+        <button class="btn-primary" id="m-save">Save contact</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/industries.js"></script>
+  <script src="/static/contacts.js"></script>
+</body>
+</html>

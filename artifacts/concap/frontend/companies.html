@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Companies — Concap AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/auth.js"></script>
+  <script src="/static/appnav.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+  <style>
+    .concap-logo { display:flex; align-items:center; gap:10px; font-family:'Fraunces', serif; font-size:22px; font-weight:400; letter-spacing:-0.02em; font-style:italic; color:#fff; }
+    .concap-logo-mark { width:26px; height:26px; position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .concap-logo-mark::before { content:''; position:absolute; inset:0; border:1.5px solid #FF5B2E; border-radius:50%; }
+    .concap-logo-mark::after { content:''; width:8px; height:8px; background:#FF5B2E; border-radius:50%; animation:concapPulse 2.2s ease-in-out infinite; }
+    @keyframes concapPulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(.7);} }
+
+    .crm-layout { display:grid; grid-template-columns: 340px 1fr; gap:16px; align-items:start; }
+    @media (max-width: 960px) { .crm-layout { grid-template-columns: 1fr; } }
+
+    .company-list { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; max-height: 80vh; overflow-y:auto; box-shadow: var(--shadow-sm); }
+    .company-search { padding:12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:1; }
+    .company-search input { width:100%; padding-left:36px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:13px center; }
+    .company-item { padding:12px 14px; border-bottom:1px solid var(--border); cursor:pointer; border-left:3px solid transparent; transition: background .12s, border-color .12s; }
+    .company-item:hover { background: var(--surface-alt); }
+    .company-item.active { background: var(--accent-soft); border-left:3px solid var(--accent); }
+    .company-item .name { font-weight:600; font-size:14px; color:var(--text); display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .company-item .name .badge { background: var(--surface-alt); color:var(--text-muted); font-size:11px; padding:2px 8px; border-radius:99px; font-weight:500; }
+    .company-item .meta { font-size:12px; color:var(--text-muted); margin-top:4px; display:flex; gap:8px; flex-wrap:wrap; }
+
+    .company-detail { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; min-height: 480px; box-shadow: var(--shadow-sm); }
+    .company-detail .empty { color:var(--text-muted); text-align:center; padding:80px 20px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+    .company-detail .empty .em-mark { width:64px; height:64px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:28px; }
+    .company-detail .empty .em-title { font-size:16px; font-weight:600; color:var(--text); }
+    .company-detail .empty .em-sub { font-size:13px; max-width:340px; line-height:1.55; }
+    .company-detail .head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; padding-bottom:18px; border-bottom:1px solid var(--border); margin-bottom:20px; }
+    .company-detail h2 { margin:0 0 4px 0; font-size:22px; color:var(--text); }
+    .company-detail .sub { color:var(--text-muted); font-size:13px; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:16px; }
+    .stat { background: var(--surface-alt); padding:12px 14px; border-radius:10px; border:1px solid var(--border); }
+    .stat .n { font-size:24px; font-weight:700; line-height:1.1; background:var(--accent-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat .l { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-top:4px; font-weight:600; }
+    .head-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+    .info-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px 24px; margin-bottom:20px; }
+    @media (max-width:560px) { .info-grid { grid-template-columns: 1fr; } }
+    /* Phones: tighten the segmented type filter so 3 labels fit on one row,
+       let the stats wrap to smaller tiles, and drop the list height cap. */
+    @media (max-width:480px) {
+      .content .tp-filters label { padding:7px 5px; font-size:11px; gap:3px; }
+      .content .stats { grid-template-columns:repeat(auto-fit, minmax(100px,1fr)); }
+      .content .company-list { max-height:none; }
+    }
+    .info-grid .row { display:flex; gap:10px; font-size:13px; padding:6px 0; border-bottom:1px dashed var(--border); }
+    .info-grid .row .k { color:var(--text-muted); min-width:90px; flex-shrink:0; }
+    .info-grid .row .v { color:var(--text); word-break:break-word; }
+
+    .panel { margin-top:8px; }
+    .panel-title { display:flex; justify-content:space-between; align-items:center; padding:14px 0 10px; border-top:1px solid var(--border); margin-top:18px; }
+    .panel-title h3 { margin:0; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; }
+
+    .employee-row { display:flex; gap:14px; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+    .employee-row:hover { background: var(--surface-alt); margin:0 -12px; padding:12px; border-radius:8px; }
+    .employee-row:last-child { border-bottom: none; }
+    .avatar-circle { width:38px; height:38px; border-radius:50%; background:var(--accent-gradient); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; flex-shrink:0; box-shadow: 0 2px 8px var(--accent-glow); }
+    .employee-row .info { flex:1; min-width:0; }
+    .employee-row { align-items:flex-start; }
+    .employee-row .info .nm { font-weight:600; font-size:14px; color:var(--text); }
+    .employee-row .info .role { font-size:12px; color:var(--text-muted); }
+    .employee-row .info .em-summary { font-size:12px; color:var(--text-muted); margin-top:6px; line-height:1.55; }
+    .employee-row .info .em-links { margin-top:6px; }
+    .em-link { font-size:12px; color:var(--accent); text-decoration:none; font-weight:500; }
+    .em-link:hover { text-decoration:underline; }
+    .employee-row .contact { font-size:12px; color:var(--text-muted); text-align:right; max-width: 40%; }
+
+    /* AI quick-research, persisted from the scan review screen */
+    .research-block { display:flex; flex-direction:column; gap:14px; }
+    .research-when { font-size:11px; color:var(--text-muted); font-weight:500; text-transform:none; letter-spacing:0; }
+    .research-text { font-size:13px; line-height:1.6; color:var(--text); margin:0; white-space:pre-wrap; }
+    .comp-label { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); font-weight:600; margin-bottom:8px; }
+    .comp-chips { display:flex; flex-wrap:wrap; gap:6px; }
+    .comp-chip { font-size:12px; padding:4px 10px; border-radius:999px; background:var(--accent-soft); color:var(--accent-soft-text); border:1px solid var(--border); cursor:default; }
+    .type-pill { font-size:10px; padding:3px 8px; border-radius:99px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+    .type-pill.lead { background:var(--warm-bg); color:var(--warm-text); }
+    .type-pill.customer { background:var(--success-soft); color:var(--success-soft-text); }
+    .type-pill.employee { background:var(--info-soft); color:var(--info-soft-text); }
+
+    .transcript-row { padding:12px 0; border-bottom:1px solid var(--border); }
+    .transcript-row:last-child { border-bottom:none; }
+    .transcript-row .hdr { display:flex; justify-content:space-between; gap:8px; font-size:13px; margin-bottom:4px; }
+    .transcript-row .hdr .who { font-weight:600; color:var(--text); }
+    .transcript-row .hdr .when { color:var(--text-muted); font-size:12px; }
+    .transcript-row .body { font-size:13px; color:var(--text-muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .temp-pill { font-size:10px; padding:2px 7px; border-radius:99px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+    .temp-pill.hot { background:var(--hot-bg); color:var(--hot-text); }
+    .temp-pill.warm { background:var(--warm-bg); color:var(--warm-text); }
+    .temp-pill.cold { background:var(--cold-bg); color:var(--cold-text); }
+
+    /* Transcript picker — used by the "+ Connect transcript" modal */
+    .tp-search { position:sticky; top:0; background:var(--surface); padding-bottom:14px; z-index:1; margin-bottom:4px; }
+    .tp-search input { width:100%; }
+    /* Segmented control for the filter — keeps the three options on one
+       line and avoids the wrapped/awkward radio layout the user flagged. */
+    .tp-filters { display:flex; gap:0; margin-top:12px; background:var(--surface-alt); padding:4px; border-radius:10px; border:1px solid var(--border); }
+    .tp-filters label { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; font-size:12px; font-weight:500; color:var(--text-muted); padding:8px 10px; border-radius:7px; transition: all .15s ease; white-space:nowrap; text-align:center; }
+    .tp-filters label:hover { color:var(--text); }
+    .tp-filters input[type="radio"] { display:none; }
+    .tp-filters label:has(input[type="radio"]:checked) { background:var(--surface); color:var(--text); box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .tp-list { margin-top:8px; max-height:55vh; overflow:auto; margin-right:-8px; padding-right:8px; }
+    .tp-row { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:14px 14px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; transition: border-color .12s, background .12s; }
+    .tp-row:hover { border-color: var(--accent); background: var(--surface-alt); }
+    .tp-row:last-child { margin-bottom:0; }
+    .tp-row .meta { font-size:12px; color:var(--text-muted); margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .tp-row .body { font-size:12px; color:var(--text-muted); margin-top:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .tp-row .who { font-weight:600; font-size:13.5px; color:var(--text); }
+    .tp-row .right { flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+    .pill { font-size:10px; padding:3px 8px; border-radius:99px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+    .pill.info { background:var(--info-soft); color:var(--info-soft-text); }
+    .pill.muted { background:var(--surface-alt); color:var(--text-muted); border:1px solid var(--border); }
+
+    /* Modal — polished, consistent across companies + contacts */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; animation: mb-fade .15s ease; }
+    .modal-backdrop.open { display:flex; }
+    @keyframes mb-fade { from { opacity:0; } to { opacity:1; } }
+    .modal { background:var(--surface); width:min(680px, 100%); max-height:92vh; overflow:auto; border-radius:16px; box-shadow: 0 24px 64px rgba(15,23,42,.18), 0 4px 12px rgba(15,23,42,.08); border:1px solid var(--border); animation: mb-pop .2s cubic-bezier(.16,.84,.44,1); }
+    @keyframes mb-pop { from { transform: translateY(8px) scale(.985); opacity:0; } to { transform: none; opacity:1; } }
+    .modal-head { padding:22px 28px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--surface); z-index:2; }
+    .modal-head h2 { margin:0; font-size:18px; font-weight:600; letter-spacing:-.01em; color:var(--text); }
+    .modal-head .close { background:transparent; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:0; line-height:1; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; transition: background .12s, color .12s; }
+    .modal-head .close:hover { background:var(--surface-alt); color:var(--text); }
+    .modal-body { padding:24px 28px; }
+    .modal-section { margin-bottom:22px; }
+    .modal-section:last-child { margin-bottom:0; }
+    .modal-section .section-title { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:12px; font-weight:600; padding-bottom:8px; border-bottom:1px solid var(--border); }
+    .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
+    @media (max-width:560px) { .modal-grid { grid-template-columns:1fr; } }
+    .modal-grid .full { grid-column: 1 / -1; }
+    .modal-grid label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; font-weight:500; }
+    .modal-grid input, .modal-grid select, .modal-grid textarea { width:100%; }
+    .modal-foot { padding:16px 28px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; position:sticky; bottom:0; background:var(--surface); z-index:2; }
+    .modal-foot .spacer { flex:1; }
+
+    .btn-primary { background:var(--accent); color:#fff; border:1px solid var(--accent); padding:9px 16px; border-radius:8px; font-weight:500; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-primary:hover { background:var(--accent-hover); }
+    .btn-secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); padding:9px 16px; border-radius:8px; font-weight:500; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn-secondary:hover { background:var(--surface-alt); }
+    .btn-danger { background:var(--danger-soft); color:var(--danger-soft-text); border:1px solid var(--border); padding:9px 16px; border-radius:8px; font-weight:500; cursor:pointer; }
+    .btn-danger:hover { background:var(--danger-soft); border-color:var(--danger); color:var(--danger); }
+    .btn-link { background:none; border:none; color:var(--accent); font-weight:500; cursor:pointer; padding:0; font-size:13px; }
+    .btn-link:hover { text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand" style="margin-bottom:24px;">
+        <div class="concap-logo"><div class="concap-logo-mark"></div>Concap AI</div>
+      </div>
+      <div class="nav-section">Insights</div>
+      <a class="nav-item" href="/dashboard"><span class="icon">◧</span> Dashboard</a>
+      <a class="nav-item" href="/conversations"><span class="icon">▤</span> Conversations</a>
+      <a class="nav-item" href="/transcribe"><span class="icon">✎</span> Quick transcribe</a>
+      <div class="nav-section">CRM</div>
+      <a class="nav-item" href="/scan"><span class="icon">⧈</span> Scan card</a>
+      <a class="nav-item active" href="/companies"><span class="icon">▦</span> Companies</a>
+      <a class="nav-item" href="/contacts"><span class="icon">◰</span> Contacts</a>
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" href="/integrations"><span class="icon">⚡</span> Integrations</a>
+      <div class="footer">
+        <div class="row" style="margin-bottom:10px;"><span class="dot"></span><span id="org-name">—</span></div>
+        <div class="account"><span class="avatar">@</span><span class="email" id="auth-email">—</span></div>
+        <a class="logout" id="auth-logout">Sign out</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner">
+        <div class="page-header">
+          <div>
+            <h1>Companies</h1>
+            <div class="subtitle">Every company you've captured — scan a card or add one manually.</div>
+          </div>
+          <div class="actions">
+            <a href="/scan" class="btn-primary">+ Scan card</a>
+            <button class="btn-secondary" id="btn-new-company">+ Add company</button>
+          </div>
+        </div>
+
+        <div id="alert"></div>
+
+        <div class="crm-layout">
+          <div class="company-list">
+            <div class="company-search">
+              <input id="q" placeholder="Search companies, industries…" />
+            </div>
+            <div id="companies"></div>
+          </div>
+
+          <div class="company-detail" id="detail">
+            <div class="empty">
+              <div class="em-mark">▦</div>
+              <div class="em-title">Pick a company to view its details</div>
+              <div class="em-sub">Choose a company from the list on the left to see its contact persons, stored transcripts, and full profile. Scan a card or add one manually to create your first company.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Company add/edit modal -->
+  <div class="modal-backdrop" id="cmodal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="cm-title">Add company</h2>
+        <button class="close" id="cm-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <div class="section-title">Identity</div>
+          <div class="modal-grid">
+            <div class="full"><label>Company name *</label><input id="cm-name" placeholder="Acme Inc." /></div>
+            <div>
+              <label>Industry</label>
+              <select id="cm-industry"></select>
+              <input id="cm-industry-other" class="hidden" placeholder="Type industry…" style="margin-top:6px;" />
+            </div>
+            <div><label>Website</label><input id="cm-website" placeholder="acme.com" /></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="section-title">Contact</div>
+          <div class="modal-grid">
+            <div><label>Email</label><input id="cm-email" type="email" placeholder="info@acme.com" /></div>
+            <div><label>Phone</label><input id="cm-phone" placeholder="+1 555 0100" /></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="section-title">Address</div>
+          <div class="modal-grid">
+            <div class="full"><label>Street address</label><textarea id="cm-address" rows="2" placeholder="123 Market St, Suite 400"></textarea></div>
+            <div><label>City</label><input id="cm-city" /></div>
+            <div><label>State / region</label><input id="cm-state" /></div>
+            <div><label>Country</label><input id="cm-country" /></div>
+            <div><label>GST / Tax ID</label><input id="cm-gst" /></div>
+          </div>
+        </div>
+        <div class="modal-section">
+          <div class="section-title">Other</div>
+          <div class="modal-grid">
+            <div class="full"><label>Referrer (optional)</label><input id="cm-referrer" placeholder="Trade show · partner · introduction" /></div>
+            <div class="full"><label>Notes</label><textarea id="cm-notes" rows="3"></textarea></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-danger" id="cm-delete" style="display:none;">Delete</button>
+        <div class="spacer"></div>
+        <button class="btn-secondary" id="cm-cancel">Cancel</button>
+        <button class="btn-primary" id="cm-save">Save company</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact-person add/edit modal -->
+  <div class="modal-backdrop" id="pmodal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="pm-title">Add contact person</h2>
+        <button class="close" id="pm-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <div class="section-title">Person</div>
+          <div class="modal-grid">
+            <div><label>Full name *</label><input id="pm-name" placeholder="Jane Doe" /></div>
+            <div><label>Designation</label><input id="pm-designation" placeholder="Head of Sales" /></div>
+            <div><label>Email</label><input id="pm-email" type="email" /></div>
+            <div><label>Phone</label><input id="pm-phone" /></div>
+            <div>
+              <label>Save as</label>
+              <select id="pm-type">
+                <option value="lead">Lead</option>
+                <option value="customer">Customer</option>
+                <option value="employee">Employee</option>
+              </select>
+            </div>
+            <div class="full"><label>Notes</label><textarea id="pm-notes" rows="2"></textarea></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-danger" id="pm-delete" style="display:none;">Delete</button>
+        <div class="spacer"></div>
+        <button class="btn-secondary" id="pm-cancel">Cancel</button>
+        <button class="btn-primary" id="pm-save">Save contact</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transcript picker modal: browse existing transcripts and link one
+       to the active company. Uses the same Conversation.company_id FK as
+       the booth's pre-record picker, so the choice is durable. -->
+  <div class="modal-backdrop" id="tpmodal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="tp-title">Connect transcript</h2>
+        <button class="close" id="tp-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="tp-search">
+          <input id="tp-q" placeholder="Search by visitor, staff, or transcript text…" />
+          <div class="tp-filters">
+            <label><input type="radio" name="tp-filter" value="unlinked" checked /> Unlinked only</label>
+            <label><input type="radio" name="tp-filter" value="other" /> Linked to other companies</label>
+            <label><input type="radio" name="tp-filter" value="all" /> All transcripts</label>
+          </div>
+        </div>
+        <div class="tp-list" id="tp-list">
+          <div style="padding:24px; text-align:center; color:var(--text-muted); font-size:13px;">Loading…</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <div class="spacer"></div>
+        <button class="btn-secondary" id="tp-cancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/industries.js"></script>
+  <script src="/static/companies.js"></script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="apple-touch-icon" href="/static/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Brands — Concap AI</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/auth.js"></script>
+    <script src="/static/appnav.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .concap-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "Fraunces", serif;
+        font-size: 22px;
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        font-style: italic;
+        color: #fff;
+      }
+      .concap-logo-mark {
+        width: 26px;
+        height: 26px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .concap-logo-mark::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1.5px solid #ff5b2e;
+        border-radius: 50%;
+      }
+      .concap-logo-mark::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: #ff5b2e;
+        border-radius: 50%;
+        animation: concapPulse 2.2s ease-in-out infinite;
+      }
+      @keyframes concapPulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(0.7);
+        }
+      }
+
+      .brands-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+      @media (max-width: 980px) {
+        .brands-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .brand-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .brand-list-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .brand-list-item:hover {
+        border-color: var(--accent);
+      }
+      .brand-list-item.active {
+        border-color: var(--accent);
+        background: var(--accent) 10;
+      }
+      .brand-swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        border: 1px solid var(--border);
+      }
+      .brand-list-item .bn {
+        flex: 1;
+        min-width: 0;
+      }
+      .brand-list-item .bn strong {
+        display: block;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .brand-list-item .bn span {
+        display: block;
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .badge-default {
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+      .field label {
+        display: block;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      .field input[type="text"],
+      .field input[type="email"],
+      .field textarea,
+      .field select {
+        width: 100%;
+        padding: 10px 12px;
+        box-sizing: border-box;
+      }
+      .field textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+      .row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .logo-drop {
+        border: 1.5px dashed var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.15s;
+      }
+      .logo-drop:hover {
+        border-color: var(--accent);
+      }
+      .logo-preview {
+        max-width: 100%;
+        max-height: 120px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        background: #fff;
+        padding: 6px;
+      }
+      .color-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .color-row input[type="color"] {
+        width: 46px;
+        height: 38px;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: none;
+        cursor: pointer;
+      }
+      .save-bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .muted {
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+      .toast {
+        font-size: 13px;
+      }
+      .toast.ok {
+        color: #22c55e;
+      }
+      .toast.err {
+        color: #ef4444;
+      }
+      .section-h {
+        margin: 22px 0 10px;
+        font-size: 15px;
+        font-weight: 600;
+        border-top: 1px solid var(--border);
+        padding-top: 18px;
+      }
+      .tmpl,
+      .asset-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .tmpl .row2 {
+        margin-bottom: 10px;
+      }
+      .asset-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .asset-item .ai-name {
+        flex: 1;
+        min-width: 0;
+      }
+      .asset-item .ai-name strong {
+        display: block;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .asset-item .ai-name span {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .pill {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+      }
+      .link-danger {
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 12px;
+        background: none;
+        border: none;
+      }
+      .empty-detail {
+        color: var(--text-muted);
+        padding: 40px 8px;
+        text-align: center;
+      }
+      .inline-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand" style="margin-bottom: 24px">
+          <div class="concap-logo">
+            <div class="concap-logo-mark"></div>
+            Concap AI
+          </div>
+        </div>
+        <div class="nav-section">Insights</div>
+        <a class="nav-item" href="/dashboard"
+          ><span class="icon">◧</span> Dashboard</a
+        >
+        <div class="nav-section">CRM</div>
+        <a class="nav-item" href="/scan"
+          ><span class="icon">⧈</span> Scan card</a
+        >
+        <a class="nav-item" href="/companies"
+          ><span class="icon">▦</span> Companies</a
+        >
+        <a class="nav-item" href="/contacts"
+          ><span class="icon">◰</span> Contacts</a
+        >
+        <div class="nav-section">Settings</div>
+        <a class="nav-item" href="/integrations"
+          ><span class="icon">⚡</span> Integrations</a
+        >
+
+        <div class="footer">
+          <div class="row" style="margin-bottom: 10px">
+            <span class="dot"></span><span id="org-name">—</span>
+          </div>
+          <div class="account">
+            <span class="avatar">@</span
+            ><span class="email" id="auth-email">—</span>
+          </div>
+          <a class="logout" id="auth-logout">Sign out</a>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="content-inner">
+          <div class="page-header">
+            <div>
+              <h1>Branding</h1>
+              <div class="subtitle">
+                Manage multiple brands — identity, voice, assets and proposal
+                templates. Pick a brand when drafting a proposal in the Quote
+                agent.
+              </div>
+            </div>
+            <div class="inline-actions">
+              <button class="btn-primary" id="new-brand-btn">New brand</button>
+            </div>
+          </div>
+
+          <div
+            id="admin-warn"
+            class="card"
+            style="display: none; border-color: #f59e0b55"
+          >
+            <div class="muted">
+              Only an owner or admin can add or change brands. You can view the
+              current brands below.
+            </div>
+          </div>
+
+          <div class="brands-layout">
+            <div>
+              <div class="brand-list" id="brand-list"></div>
+            </div>
+
+            <div class="card" id="detail-card">
+              <div class="empty-detail" id="empty-detail">
+                Select a brand on the left, or create a new one.
+              </div>
+
+              <div id="editor" style="display: none">
+                <div
+                  class="save-bar"
+                  style="
+                    margin-top: 0;
+                    margin-bottom: 8px;
+                    justify-content: space-between;
+                  "
+                >
+                  <div class="inline-actions">
+                    <button class="btn-secondary" id="make-default-btn">
+                      Make default
+                    </button>
+                    <span
+                      id="default-flag"
+                      class="badge-default"
+                      style="display: none"
+                      >Default</span
+                    >
+                  </div>
+                  <button class="link-danger" id="delete-brand-btn">
+                    Delete brand
+                  </button>
+                </div>
+
+                <div class="field">
+                  <label>Brand logo</label>
+                  <div class="logo-drop" id="logo-drop">
+                    <img
+                      id="logo-preview"
+                      class="logo-preview"
+                      style="display: none"
+                      alt="logo preview"
+                    />
+                    <div id="logo-hint" class="muted">
+                      Click to upload a PNG or JPG (under ~1 MB)
+                    </div>
+                    <input
+                      type="file"
+                      id="logo-input"
+                      accept="image/png,image/jpeg"
+                      style="display: none"
+                    />
+                  </div>
+                  <button
+                    class="btn-secondary"
+                    id="logo-remove"
+                    style="margin-top: 8px; display: none"
+                  >
+                    Remove logo
+                  </button>
+                </div>
+
+                <div class="row2">
+                  <div class="field">
+                    <label>Brand name</label>
+                    <input type="text" id="name" placeholder="Acme Premium" />
+                  </div>
+                  <div class="field">
+                    <label>Company name</label>
+                    <input
+                      type="text"
+                      id="company_name"
+                      placeholder="Acme Inc."
+                    />
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Address</label>
+                  <textarea
+                    id="address"
+                    placeholder="123 Market St, Suite 400&#10;San Francisco, CA 94103"
+                  ></textarea>
+                </div>
+                <div class="row2">
+                  <div class="field">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      placeholder="hello@acme.com"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Phone</label>
+                    <input
+                      type="text"
+                      id="phone"
+                      placeholder="+1 555 010 1234"
+                    />
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Website</label>
+                  <input type="text" id="website" placeholder="www.acme.com" />
+                </div>
+                <div class="row2">
+                  <div class="field">
+                    <label>Primary color</label>
+                    <div class="color-row">
+                      <input
+                        type="color"
+                        id="primary_color_pick"
+                        value="#141414"
+                      />
+                      <input
+                        type="text"
+                        id="primary_color"
+                        placeholder="#141414"
+                        style="flex: 1"
+                      />
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label>Accent color</label>
+                    <div class="color-row">
+                      <input
+                        type="color"
+                        id="accent_color_pick"
+                        value="#FF5B2E"
+                      />
+                      <input
+                        type="text"
+                        id="accent_color"
+                        placeholder="#FF5B2E"
+                        style="flex: 1"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="row2">
+                  <div class="field">
+                    <label>Currency symbol</label>
+                    <input
+                      type="text"
+                      id="currency"
+                      placeholder="$"
+                      maxlength="4"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Proposal theme</label>
+                    <select id="proposal_theme">
+                      <option value="">Default</option>
+                      <option value="classic">Classic</option>
+                      <option value="modern">Modern</option>
+                      <option value="bold">Bold</option>
+                      <option value="minimal">Minimal</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Typography (optional note)</label>
+                  <input
+                    type="text"
+                    id="typography"
+                    placeholder="e.g. Headings in a serif, body in a clean sans"
+                  />
+                </div>
+
+                <div class="section-h">Voice & identity</div>
+                <div class="field">
+                  <label>What this brand does</label>
+                  <textarea
+                    id="business_description"
+                    placeholder="A short description of the brand, its products and positioning."
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label>Brand voice & tone</label>
+                  <textarea
+                    id="brand_voice"
+                    placeholder="e.g. Confident and concise. Avoid jargon. Speak to outcomes, not features."
+                  ></textarea>
+                </div>
+
+                <div class="section-h">Proposal boilerplate</div>
+                <div class="field">
+                  <label>Terms &amp; conditions</label>
+                  <textarea
+                    id="terms"
+                    placeholder="Standard terms shown at the end of every proposal."
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label>Signature block</label>
+                  <textarea
+                    id="signature"
+                    placeholder="Jane Doe&#10;Head of Sales&#10;jane@acme.com"
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label>Footer</label>
+                  <input
+                    type="text"
+                    id="footer"
+                    placeholder="Acme Inc. · www.acme.com · Confidential"
+                  />
+                </div>
+
+                <div class="save-bar">
+                  <button class="btn-primary" id="save-btn">Save brand</button>
+                  <span class="toast" id="toast"></span>
+                </div>
+
+                <div class="section-h">Proposal templates</div>
+                <div class="muted" style="margin-bottom: 10px">
+                  Templates let the AI follow a specific proposal structure.
+                  Pick one when drafting.
+                </div>
+                <div id="templates"></div>
+                <button class="btn-secondary" id="add-template-btn">
+                  Add template
+                </button>
+
+                <div class="section-h">Brand assets</div>
+                <div class="muted" style="margin-bottom: 10px">
+                  Upload reference documents (case studies, past proposals,
+                  catalogs). The AI uses their text as reference data when
+                  drafting under this brand.
+                </div>
+                <div id="assets"></div>
+                <div class="save-bar" style="margin-top: 6px">
+                  <select id="asset-kind" style="max-width: 160px">
+                    <option value="other">Other</option>
+                    <option value="terms">Terms</option>
+                    <option value="contract">Contract</option>
+                    <option value="cover">Cover</option>
+                    <option value="catalog">Catalog</option>
+                    <option value="pricing">Pricing</option>
+                    <option value="marketing">Marketing</option>
+                  </select>
+                  <button class="btn-secondary" id="asset-upload-btn">
+                    Upload documents
+                  </button>
+                  <input
+                    type="file"
+                    id="asset-input"
+                    multiple
+                    style="display: none"
+                  />
+                  <span class="toast" id="asset-toast"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/static/brands.js"></script>
+  </body>
+</html>

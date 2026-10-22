@@ -1,0 +1,189 @@
+# HubSpot Conversation Sync Integration
+
+## Objective
+
+Implement a HubSpot integration that allows users to automatically sync AI-generated conversation data, contacts, summaries, transcripts, action items, and sales insights from our application into HubSpot CRM.
+
+## User Story
+
+As a HubSpot user, I want my AI-generated conversation details to automatically sync with HubSpot so that I can maintain accurate customer records, track conversations, manage follow-ups, and reduce manual CRM updates.
+
+## Core Features
+
+### 1. HubSpot Connection
+
+* Allow users to connect their HubSpot account using OAuth 2.0.
+* Display connection status.
+* Allow disconnect and reconnect functionality.
+* Store and refresh access tokens securely.
+
+### 2. Contact Synchronization
+
+When a conversation is processed, the system should:
+
+* Extract contact information (name, email, phone number, company).
+* Search for an existing contact in HubSpot.
+* Create a new contact if none exists.
+* Update the existing contact if found.
+* Associate all synced conversation data with the correct contact.
+
+### 3. Conversation Summary Sync
+
+The AI-generated summary should be automatically pushed to HubSpot as a Note associated with the contact.
+
+Example:
+
+* Customer requirements
+* Key discussion points
+* Important decisions
+* Business opportunities
+
+### 4. Full Transcript Sync
+
+The complete conversation transcript should be synced to HubSpot and attached to the associated contact record.
+
+The transcript should include:
+
+* Speaker labels
+* Timestamps (if available)
+* Complete conversation history
+
+### 5. Action Item Sync
+
+AI-generated action items should be converted into HubSpot Tasks.
+
+Examples:
+
+* Send proposal
+* Schedule follow-up meeting
+* Share pricing information
+* Arrange product demo
+
+Tasks should include:
+
+* Title
+* Description
+* Due date (if detected)
+* Contact association
+
+## Advanced CRM Features
+
+### 6. Company Sync
+
+If company information is detected:
+
+* Create or update the HubSpot Company record.
+* Associate contacts and conversations with the company.
+
+### 7. Deal Creation & Updates
+
+If the AI detects sales opportunities:
+
+* Create a HubSpot Deal.
+* Associate the deal with the contact and company.
+* Populate:
+
+  * Deal name
+  * Estimated value
+  * Pipeline stage
+  * Expected close date (if available)
+
+### 8. Conversation Timeline Activities
+
+Every synced conversation should appear in HubSpot as a CRM activity timeline entry containing:
+
+* Conversation date
+* Summary
+* Transcript
+* Action items
+* AI insights
+
+## AI-Powered Enhancements
+
+### 9. AI Insights Sync
+
+Push AI-generated insights into HubSpot custom properties:
+
+Examples:
+
+* Sentiment Score
+* Customer Intent
+* Lead Quality
+* Interest Level
+* Buying Readiness
+* Risk Indicators
+
+### 10. Lead Qualification
+
+Allow AI to classify leads automatically:
+
+* Hot Lead
+* Warm Lead
+* Cold Lead
+
+Update the corresponding HubSpot lead status.
+
+### 11. Follow-Up Recommendations
+
+Generate AI follow-up recommendations and create HubSpot tasks automatically.
+
+Examples:
+
+* Call within 24 hours
+* Send proposal
+* Schedule product demo
+* Share onboarding information
+
+## Sync Options
+
+Provide configurable settings:
+
+* Sync Contacts
+* Sync Companies
+* Sync Conversation Summaries
+* Sync Full Transcripts
+* Sync Action Items
+* Sync Deals
+* Sync AI Insights
+
+Users should be able to enable or disable each sync option independently.
+
+## User Interface
+
+### HubSpot Integration Settings
+
+Display:
+
+* Connection status
+* Last sync time
+* Sync preferences
+* Manual sync button
+
+### Conversation Details Page
+
+Display:
+
+* Contact information
+* Transcript
+* AI summary
+* Action items
+* Sync status
+
+Actions:
+
+* Sync to HubSpot
+* Re-sync
+* View synced records
+
+## Acceptance Criteria
+
+* User can connect HubSpot successfully.
+* Contacts are created or updated automatically.
+* Conversation summaries are synced as notes.
+* Full transcripts are stored in HubSpot.
+* Action items are converted into HubSpot tasks.
+* Companies are created or updated when detected.
+* Deals are created for qualified opportunities.
+* AI insights are pushed to HubSpot fields.
+* All records remain properly associated.
+* Users can manually sync or enable automatic sync.

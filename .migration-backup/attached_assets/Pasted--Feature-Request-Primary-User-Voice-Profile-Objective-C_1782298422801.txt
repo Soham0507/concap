@@ -1,0 +1,294 @@
+# Feature Request: Primary User Voice Profile
+
+## Objective
+
+Create a Primary User Voice Profile feature that allows users to provide basic profile information and a voice sample so that Concap AI can automatically identify the main account holder across conversations, transcripts, summaries, CRM records, and proposal workflows.
+
+The Voice Profile should be configured from the user's Profile settings rather than during signup to reduce onboarding friction.
+
+---
+
+## Business Requirement
+
+The platform currently transcribes conversations and identifies speakers as:
+
+* Speaker 1
+* Speaker 2
+* Speaker 3
+
+However, the system cannot determine which speaker belongs to the account owner.
+
+Users need the ability to provide a voice sample and profile information so that Concap AI can consistently recognize the primary user in future conversations.
+
+---
+
+## User Story
+
+As a user, I want to provide my profile information and a voice sample so that Concap AI can automatically identify me in conversations and replace generic speaker labels with my actual identity.
+
+---
+
+## Navigation
+
+Add a new section under:
+
+Settings
+↓
+Profile
+↓
+Voice Profile
+
+---
+
+## Profile Information Collection
+
+Allow users to provide:
+
+### Basic Information
+
+* Full Name
+* Job Title
+* Company Name
+* Department (Optional)
+* Preferred Display Name
+
+Example:
+
+Name: Mateen Mulla
+
+Job Title: Consultant
+
+Company: ABC Consulting
+
+Display Name: Mateen
+
+---
+
+## Voice Sample Collection
+
+Allow users to create a voice profile using one of the following methods:
+
+### Option 1: Record Voice Sample
+
+Record directly within the application.
+
+Recommended length:
+
+* Minimum: 15 seconds
+* Preferred: 30 seconds
+
+Suggested script:
+
+"Hello, my name is [Name]. This voice sample will help Concap AI identify me in future conversations."
+
+### Option 2: Upload Voice Sample
+
+Supported formats:
+
+* MP3
+* WAV
+* M4A
+* AAC
+
+---
+
+## Voice Fingerprint Generation
+
+After the sample is submitted:
+
+Generate:
+
+* Voice Embedding
+* Voice Fingerprint
+* Speaker Recognition Profile
+
+Store the profile securely and associate it with the logged-in account.
+
+---
+
+## Speaker Identification Workflow
+
+For every conversation:
+
+Conversation Audio
+↓
+Speaker Detection
+↓
+Speaker Segmentation
+↓
+Voice Comparison
+↓
+Match Against User Voice Profile
+↓
+Identify Primary User
+
+Example:
+
+Before:
+
+Speaker 1:
+Let's send the proposal tomorrow.
+
+Speaker 2:
+Sounds good.
+
+After:
+
+Mateen:
+Let's send the proposal tomorrow.
+
+Customer:
+Sounds good.
+
+---
+
+## AI Summary Improvements
+
+Current:
+
+Speaker 1 agreed to send pricing.
+
+Enhanced:
+
+Mateen agreed to send pricing.
+
+---
+
+## Action Item Improvements
+
+Current:
+
+Assigned To:
+Speaker 1
+
+Enhanced:
+
+Assigned To:
+Mateen
+
+---
+
+## CRM Integration Improvements
+
+HubSpot Notes:
+
+Current:
+
+Conversation between Speaker 1 and Speaker 2.
+
+Enhanced:
+
+Conversation between Mateen and John Smith.
+
+---
+
+## Quote Agent Improvements
+
+Provide speaker ownership context.
+
+Example:
+
+Customer Requirement:
+Need CRM implementation.
+
+Requested By:
+John Smith
+
+Commitment:
+Proposal by Friday.
+
+Committed By:
+Mateen
+
+---
+
+## Imported Conversation Support
+
+Voice identification should work for:
+
+* Native recordings
+* Plaud imports
+* Zoom imports
+* Teams imports
+* Uploaded audio
+
+All imported conversations should use the stored voice profile for speaker recognition.
+
+---
+
+## Voice Profile Management
+
+Allow users to:
+
+* View Voice Profile Status
+* Update Basic Information
+* Record New Sample
+* Upload New Sample
+* Delete Voice Profile
+* Test Voice Recognition
+
+---
+
+## UI Example
+
+Settings
+└── Profile
+└── Voice Profile
+
+Primary User Information
+
+Name: Mateen Mulla
+
+Company: ABC Consulting
+
+Voice Profile Status: Active
+
+Recognition Accuracy: 96%
+
+[Record New Sample]
+
+[Upload New Sample]
+
+[Delete Voice Profile]
+
+---
+
+## Privacy & Consent
+
+Before creating a voice profile:
+
+Display consent notice explaining:
+
+* Voice sample storage
+* Speaker identification usage
+* Data retention policy
+
+Users must be able to delete their voice profile at any time.
+
+---
+
+## Acceptance Criteria
+
+✓ Users can enter basic profile information.
+
+✓ Users can record or upload a voice sample.
+
+✓ Voice fingerprint is generated successfully.
+
+✓ Primary user is identified in future conversations.
+
+✓ Generic speaker labels are replaced where confidence is high.
+
+✓ Voice recognition works for imported and native recordings.
+
+✓ CRM sync uses identified speaker names.
+
+✓ Quote Agent receives speaker ownership context.
+
+✓ Users can update or delete their voice profile.
+
+---
+
+## Success Outcome
+
+Concap AI consistently identifies the primary account holder in conversations using a stored voice profile and user information, resulting in more accurate transcripts, summaries, action items, CRM records, and proposal generation.

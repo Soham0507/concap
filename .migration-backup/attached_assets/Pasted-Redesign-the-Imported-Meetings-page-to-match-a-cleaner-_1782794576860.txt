@@ -1,0 +1,298 @@
+Redesign the Imported Meetings page to match a cleaner workflow similar to the reference UI while keeping our existing dark theme.
+
+Important:
+
+Do not change any backend logic, APIs, or database structure.
+This is a UI/UX refactor only.
+Reuse all existing functionality.
+Page Structure
+
+Create four primary tabs at the top:
+
+Paste | Upload | Meetings | Speakers
+
+Each tab should function independently.
+
+Paste
+Upload
+Meetings
+Speakers
+
+The active tab should be highlighted.
+
+Meetings Tab
+
+When the Meetings tab is selected, display a second row of provider tabs.
+
+Zoom | Microsoft Teams | Google Meet
+
+Only one provider is active at a time.
+
+Meetings Page Layout
+
+Split the page into two panels.
+
+--------------------------------------------------------------
+| Provider Section (Left - 40%) | Imported Meetings (Right - 60%) |
+--------------------------------------------------------------
+
+The left panel manages meeting providers.
+
+The right panel displays all imported meeting transcripts.
+
+Left Panel - Provider Section
+Provider Tabs
+Zoom | Microsoft Teams | Google Meet
+
+Selecting a provider should update only the left-side content.
+
+Provider Connection Card
+
+Display:
+
+Provider logo
+Provider name
+Connection status
+
+Example:
+
+Zoom
+🟢 Connected
+
+If disconnected:
+
+🔴 Not Connected
+Provider Action Buttons
+
+If connected, display:
+
+Create Meeting
+Refresh
+Disconnect
+
+If disconnected:
+
+Connect
+
+Reuse existing APIs.
+
+Meetings List
+
+Display all meetings for the selected provider.
+
+Each meeting card should contain:
+
+Meeting title
+Date
+Time
+Duration
+Number of attendees
+Status
+Meeting ID (optional)
+
+Example:
+
+Weekly Sales Review
+
+June 4, 2026
+9:00 PM
+60 minutes
+
+3 attendees
+Meeting Actions
+
+Each meeting card should include:
+
+Join
+Copy Link
+Fetch Transcript
+Delete
+
+Reuse existing APIs.
+
+Right Panel - Imported Meetings
+
+The right side should always display a list of Imported Meetings.
+
+This panel is independent of the provider list.
+
+Whenever a transcript is fetched from Zoom, Microsoft Teams, or Google Meet, the meeting should automatically appear in this panel.
+
+Header
+
+Display:
+
+Imported Meetings
+
+Below the heading:
+
+All meetings whose transcripts have been successfully imported.
+Imported Meeting Cards
+
+Each imported meeting card should display:
+
+Meeting title
+Provider (Zoom / Teams / Meet)
+Import date
+Original meeting date
+Duration
+Number of speakers
+Transcript status
+Transcript size (optional)
+
+Example:
+
+Weekly Sales Review
+
+Zoom
+
+Imported:
+June 6, 2026
+
+Meeting Date:
+June 4, 2026
+
+Duration:
+60 min
+
+3 Speakers
+
+Transcript Imported
+Imported Meeting Actions
+
+Each imported meeting should have:
+
+View Transcript
+Download
+Rename
+Delete
+Transcript Viewer
+
+When View Transcript is clicked:
+
+Open the transcript viewer in the right panel (or an expandable detail view).
+
+Keep the existing functionality.
+
+Include:
+
+Speakers | Transcript
+
+tabs.
+
+Reuse the current transcript component.
+
+Auto Refresh Behavior
+
+Whenever the user clicks Fetch Transcript from any provider:
+
+Fetch transcript using the existing API.
+Save it using the current backend.
+Automatically add the meeting to the Imported Meetings panel.
+Refresh only the Imported Meetings list.
+Do not reload the entire page.
+Provider Behavior
+Zoom
+
+Display only Zoom meetings.
+
+Buttons:
+
+Connect
+Create Meeting
+Refresh
+Disconnect
+Microsoft Teams
+
+Same layout.
+
+Display only Microsoft Teams meetings.
+
+Reuse existing APIs.
+
+Google Meet
+
+Same layout.
+
+Display only Google Meet meetings.
+
+Reuse existing APIs.
+
+Paste Tab
+
+Keep existing functionality.
+
+Allow users to paste transcript text manually.
+
+Reuse current backend.
+
+Upload Tab
+
+Keep existing functionality.
+
+Allow uploading:
+
+TXT
+DOCX
+PDF
+SRT
+VTT
+
+Reuse existing upload APIs.
+
+Speakers Tab
+
+Display the existing speaker library.
+
+Each speaker card should include:
+
+Avatar
+Name
+Meetings count
+Last seen
+Merge Speaker
+Delete
+
+Reuse existing functionality.
+
+State Management
+
+Maintain:
+
+Selected primary tab
+Selected provider
+Selected meeting
+Selected imported meeting
+
+Switching providers should not reload the page.
+
+Only the relevant data should update.
+
+Responsive Design
+Desktop
+---------------------------------------------------------------
+Primary Tabs
+
+Provider Tabs
+
+---------------------------------------------------------------
+| Providers & Meetings | Imported Meetings & Transcript Viewer |
+---------------------------------------------------------------
+Tablet
+
+Imported Meetings should appear below the provider section.
+
+Mobile
+
+Everything should stack vertically.
+
+UI Improvements
+Keep the existing dark theme.
+Rounded cards (12–16px radius).
+Smooth hover animations.
+Highlight active tabs.
+Display provider icons for Zoom, Microsoft Teams, and Google Meet.
+Add loading skeletons while fetching meetings or transcripts.
+Show meaningful empty states when no meetings or imported transcripts are available.
+The Imported Meetings panel should behave like a transcript library, allowing users to quickly access every meeting whose transcript has already been imported without needing to revisit the provider list.
+Do not modify any backend logic, APIs, authentication, transcript processing, meeting creation, or database schema. This task is strictly a frontend UI/UX redesign using the existing functionality.

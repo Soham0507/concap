@@ -1,0 +1,44 @@
+1. Frontend (the UI the user sees)
+client/src/pages/meetings.tsx — the main Meetings page: meeting list/cards, recording, the "View raw transcript" dialog, the audio player with click-to-play utterances, and speaker badges.
+client/src/pages/brain-hub.tsx (and brain.tsx) — the tabbed Brain workspace that hosts Meetings as a tab (URL-synced ?tab=meetings).
+client/src/pages/conversations.tsx — sister page for chat/email ingestion; shares the same backend normalizers.
+client/src/pages/zoom-integration.tsx & client/src/pages/connect.tsx — Connect/Disconnect screens for the meeting integrations.
+client/src/components/meetings/ — the supporting pieces:
+MeetingIntelligenceTab.tsx, ConversationSelector.tsx, IntelligenceDocumentView.tsx, BatchSummaryView.tsx.
+client/src/components/layout/Sidebar.tsx — nav entry (you'd just add the link).
+2. Backend services (the real engine)
+server/services/assemblyai.ts — AssemblyAI transcription with diarization (speaker labels).
+server/services/voiceprints.ts — cross-meeting speaker fingerprinting / "remember who this is."
+server/services/google-meet-service.ts — Google Meet OAuth + transcript fetching.
+server/services/zoom-service.ts — Zoom OAuth + recordings/transcripts.
+server/services/teams-service.ts — Microsoft Teams OAuth + transcripts.
+server/services/meeting-integrations.ts — shared layer that routes to the three providers above.
+server/services/meeting-intelligence-service.ts — AI summarization + the background worker that processes meetings.
+server/services/conversation-parsers.ts — normalizeConversation(), the normalizer that turns any source (audio/Slack/Zoom/email) into one shape.
+server/services/srt-parser.ts — parses subtitle/caption files.
+Whisper fallback lives in the OpenAI wrapper (server/services/tracked-openai.ts) used when AssemblyAI key is missing.
+3. Backend API routes
+All routes live in server/routes.ts (note: routes.v1.ts/routes.v2.ts are dead copies — ignore them). The relevant endpoints:
+
+/api/transcribe, /api/transcribe/init, /api/transcribe/chunk — audio upload (chunked, up to 2 GB) + transcription.
+/api/conversations/:id/audio — streams the recording back for playback.
+/api/conversations/:id/confirm-speaker — user confirms/renames a speaker.
+/api/conversations/bulk-import — bulk transcript ingestion.
+/api/integrations/meetings/:provider/auth-url | /callback | /disconnect | /import — the Meet/Zoom/Teams OAuth + import flow.
+4. Data model (shared/schema.ts)
+conversations table — stores transcripts + audioUrl, diarizedTranscript, speakerMap, participantCount.
+conversationAttachments — files attached to a meeting.
+speakerVoiceprints — the per-user voice fingerprint registry.
+integrations — stores the Meet/Zoom/Teams OAuth tokens.
+Types: DiarizedUtterance, SpeakerMapEntry, SpeakerMap.
+5. Supporting infrastructure (easy to miss, but required)
+server/objectStorage.ts + server/objectAcl.ts — stores the audio files (private bucket). Recordings won't persist without this.
+server/storage.ts — the DB access methods (getConversations, voiceprint upserts, etc.).
+server/db-setup.ts + server/index.ts — start the meeting-intelligence background worker.
+6. Secrets / environment variables needed
+ASSEMBLYAI_API_KEY — transcription + diarization (falls back to OpenAI Whisper if missing).
+OPENAI_API_KEY (or GEMINI_API_KEY) — AI summaries + speaker-name mapping.
+ZOOM_CLIENT_ID / ZOOM_CLIENT_SECRET — Zoom.
+GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET — Google Meet.
+Microsoft Teams client ID/secret — Teams (not currently in your secrets list, would need adding).
+Object-storage bucket config — for audio persistence.

@@ -1,0 +1,250 @@
+Implement:
+
+Audio upload system
+Audio transcription
+Transcript viewer
+AI summary generation
+Dashboard UI
+
+Use FastAPI.
+
+Create these endpoints:
+
+POST /upload-audio
+
+Accept audio file uploads
+Save audio locally inside uploads/
+Create a processing job
+Return recording ID
+
+GET /recording/{id}
+
+Return recording details
+
+GET /transcript/{id}
+
+Return transcript
+
+GET /summary/{id}
+
+Return AI summary
+
+GET /conversations
+
+Return all processed conversations
+
+Use PostgreSQL.
+
+Create tables:
+
+recordings
+
+id
+filename
+audio_path
+duration
+status
+created_at
+
+transcript_chunks
+
+id
+recording_id
+speaker
+start_time
+end_time
+text
+
+conversations
+
+id
+recording_id
+title
+summary
+lead_score
+sentiment
+created_at
+
+action_items
+
+id
+conversation_id
+task
+status
+
+Create a complete AI pipeline:
+
+STEP 1:
+Receive uploaded audio
+
+STEP 2:
+Split long audio into smaller chunks using ffmpeg or pydub
+
+Chunk size:
+2 minutes each
+
+STEP 3:
+Transcribe each chunk using OpenAI Whisper
+
+Store:
+
+text
+timestamps
+
+STEP 4:
+Merge all transcript chunks
+
+STEP 5:
+Generate AI summary using OpenAI GPT
+
+Prompt:
+Analyze this business conversation and return:
+
+summary
+action items
+lead quality
+sentiment
+important discussion points
+
+Build dashboard pages using:
+
+HTML
+TailwindCSS
+Vanilla JavaScript
+
+Dashboard should include:
+
+Upload audio section
+Processing status
+Transcript viewer
+Conversation summaries
+Lead score cards
+Hot/Warm/Cold lead counters
+
+Integrate Pyannote Audio.
+
+Requirements:
+
+Detect multiple speakers
+Assign speaker labels
+Merge speaker data with transcript
+
+Store output like:
+
+{
+"speaker": "Speaker 1",
+"start": 0,
+"end": 12,
+"text": "Hello sir"
+}
+
+Implement AI conversation splitting.
+
+System must detect:
+
+silence gaps
+topic changes
+speaker pattern changes
+
+Rules:
+
+Silence > 15 seconds may indicate new conversation
+Major embedding similarity drop may indicate topic change
+Speaker pattern changes may indicate new visitor
+
+Use:
+
+sentence-transformers
+cosine similarity
+
+Create a segmentation service that groups transcript chunks into conversations.
+
+Extract structured business intelligence from conversations.
+
+AI should extract:
+
+intent
+budget
+urgency
+products
+competitors
+pain points
+buying role
+sentiment
+action items
+
+Store extracted data in PostgreSQL.
+
+Implement semantic search using pgvector.
+
+Generate embeddings for:
+
+conversations
+transcript chunks
+
+Create endpoint:
+
+POST /search
+
+User query example:
+"show conversations discussing pricing"
+
+Return semantically similar conversations.
+
+Use Redis + Celery.
+
+Audio processing must happen in background workers.
+
+Pipeline:
+Upload
+→ Queue Job
+→ Transcription
+→ Diarization
+→ Segmentation
+→ AI Analysis
+→ Save Results
+
+Use WebSockets.
+
+Frontend should show:
+
+Uploading
+Transcribing
+Detecting speakers
+Analyzing
+Completed
+Do NOT process entire 2-hour audio at once
+Always chunk audio first
+Use asynchronous background jobs
+Store timestamps everywhere
+Build modular AI services
+Keep AI prompts configurable
+Use environment variables for API keys
+Add proper logging
+Add retry handling for failed jobs
+Make architecture scalable
+
+Design architecture so future support can be added for:
+
+live transcription
+live AI insights
+CRM integration
+WhatsApp follow-ups
+analytics dashboard
+multi-user organizations
+export system
+
+Generate:
+
+Complete backend code
+Database models
+FastAPI routes
+Celery workers
+AI services
+Frontend dashboard pages
+WebSocket implementation
+Requirements.txt
+Docker setup
+README setup instructions
+
+Implement phase-by-phase in clean modular architecture.

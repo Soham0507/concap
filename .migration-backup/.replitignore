@@ -1,0 +1,25 @@
+# Exclude files/folders from the DEPLOYMENT image (not Git).
+# The deployment image has an 8 GiB limit. Dev-accumulated runtime data and
+# tooling caches must not ship — the app recreates its data dirs at runtime.
+
+# Runtime upload/data storage (audio recordings, local SQLite). The app
+# self-creates backend/data/audio at startup (config.ensure_audio_dir) and each
+# upload router mkdirs its target, so production rebuilds these as needed.
+backend/data/
+data/
+
+# Local tooling caches and metadata — never needed in production.
+.cache/
+.local/
+.git/
+.upm/
+.canvas/
+.config/
+attached_assets/
+
+# Python caches and test artifacts
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+backend/.pytest_cache/
+backend/tests/

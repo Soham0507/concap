@@ -1,0 +1,64 @@
+## Zoom Meeting Invitation & Meeting Management Enhancement
+
+Enhance the Zoom integration by implementing a complete meeting invitation and management workflow similar to the native Zoom experience.
+
+### 1. Meeting Invitations
+
+* Add an **Invite Participants** option while creating or editing a Zoom meeting.
+* Allow users to enter one or multiple email addresses.
+* Automatically send a Zoom meeting invitation email to all invited participants once the meeting is scheduled.
+* The invitation email should include:
+
+  * Meeting Title
+  * Date & Time
+  * Time Zone
+  * Zoom Meeting Link
+  * Meeting ID
+  * Passcode (if applicable)
+  * Organizer Name
+  * "Join Meeting" button/link
+* Allow users to resend invitations at any time.
+
+### 2. Meeting Card UI
+
+Each scheduled meeting card should display:
+
+* Meeting Title
+* Meeting Status (Scheduled, Ongoing, Completed, Cancelled)
+* Date & Time
+* Duration
+* Number of Attendees
+* Meeting ID (optional)
+* Organizer Name (optional)
+
+### 3. Action Buttons
+
+Include the following fully functional action buttons on every meeting card:
+
+* **Join** – Opens the Zoom meeting directly.
+* **Copy Link** – Copies the meeting URL to the clipboard.
+* **Invite** – Opens a dialog to invite additional participants and sends invitation emails.
+* **View Participants** – Displays all invited participants and their invitation status.
+* **Edit** – Modify meeting details and notify participants of any updates.
+* **Delete** – Cancel the meeting after confirmation and optionally notify all participants.
+* **Fetch Transcript** – Retrieve the meeting transcript after the meeting has ended (if available).
+* **Paste** – Paste a copied Zoom meeting link or details when required.
+* **Refresh** – Synchronize and fetch the latest meeting status from Zoom.
+* **Disconnect** – Disconnect the connected Zoom account.
+
+### 4. Additional Functionality
+
+* Display attendee count on the meeting card.
+* Show invitation status for each participant (Pending, Accepted, Declined, No Response).
+* Automatically update meeting status based on Zoom.
+* Disable **Join** until the meeting start time (or follow Zoom's behavior).
+* Show loading indicators during API calls.
+* Display success and error toast messages for all actions.
+* Confirm before deleting or disconnecting.
+* Refresh the meeting list automatically after creating, editing, deleting, or inviting participants.
+
+### 5. User Experience
+
+* Match the overall workflow and user experience of Zoom as closely as possible.
+* Ensure all buttons are fully functional with proper backend integration and error handling.
+* Maintain a clean, responsive, and intuitive UI consistent with the existing meeting management interface.

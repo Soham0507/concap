@@ -1,0 +1,53 @@
+Add an "All Meetings" tab to the meetings section that unifies every meeting from all sources into one list, with a source tag on each row.
+
+CONTEXT
+The meetings area currently has two subtab pages linked via the `meet-subtabs` nav:
+- /meetings (frontend/meetings.html + meetings.js) — "Meeting Intelligence": transcript/audio batches analyzed via GET/POST /api/meetings/intelligence.
+- /imported-meetings (frontend/imported-meetings.html + imported-meetings.js) — "Imported & Providers": meetings imported from files/recorders via /api/imported-meetings, plus provider meetings (Zoom, Google Meet, Microsoft Teams) from /api/.../providers/created-meetings.
+There is no single view where a user can see everything together.
+
+WHAT TO BUILD
+
+1. Backend — one aggregation endpoint:
+   - Add GET /api/meetings/all on the meetings router. It must return a single
+     merged, date-sorted (newest first) list combining:
+       a. Meeting-intelligence meetings/batches
+       b. Imported meetings
+       c. Provider-created/scheduled meetings (Zoom / Google Meet / Microsoft Teams)
+   - Each item must be normalized to a common shape:
+     { id, source, title, date, participants, status, provider, detail_url }
+     where `source` is one of: "intelligence" | "imported" | "zoom" | "google_meet" | "microsoft_teams".
+   - Scope strictly to the authenticated user's org (user.org_id) exactly like the
+     existing meetings and imported-meetings routers do — no cross-org leakage.
+   - Support optional query params: ?source=<tag> to filter, ?q= for title search,
+     and simple pagination (limit/offset, default limit 50).
+
+2. Frontend — "All" tab:
+   - Add a third link "All Meetings" as the FIRST entry in the meet-subtabs nav on
+     both meetings.html and imported-meetings.html (and make it the default landing
+     tab for the meetings section).
+   - Create it following the existing pattern (no build step, vanilla JS): either a
+     new /all-meetings page or a tab panel on meetings.html — match the existing
+     meet-subtabs page-per-tab convention used by /meetings and /imported-meetings.
+   - Render one table/list of all meetings from GET /api/meetings/all. Each row shows:
+     title, date/time, participants count, status, and a colored TAG (pill badge)
+     identifying the source: "Intelligence", "Imported", "Zoom", "Google Meet",
+     "Teams". Reuse the existing .pill styles and PROVIDER_LABELS mapping from
+     imported-meetings.js rather than inventing new ones.
+   - Clicking a row opens the meeting in its native page (deep-link to the existing
+     detail view on /meetings or /imported-meetings — do not rebuild detail views).
+   - Add filter chips above the list (All / Intelligence / Imported / Zoom /
+     Google Meet / Teams) that drive the ?source= param, plus a small search box.
+   - Show a friendly empty state when there are no meetings.
+
+CONSTRAINTS
+- Escape ALL API-derived strings with the existing escapeHTML() before inserting
+  into innerHTML (this codebase has had XSS issues with unescaped innerHTML).
+- Keep auth exactly as-is: the page must be behind login, requests go through the
+  patched fetch in auth.js.
+- Match the existing visual style (styles.css variables, card/pill/table patterns).
+- If a provider isn't connected, its meetings simply don't appear — no errors.
+- Add the new page/assets to the service worker SHELL_URLS in sw.js and bump the
+  cache version constant.
+- Add backend tests for /api/meetings/all: org scoping, source filter, and merge
+  ordering, following the style of the existing tests in backend/tests/.

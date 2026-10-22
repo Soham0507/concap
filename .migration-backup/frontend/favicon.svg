@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <title>Concap</title>
+  <rect width="120" height="120" rx="26" fill="#0C0C0E"/>
+  <g transform="translate(60 60) scale(0.78) translate(-60 -60)">
+    <path d="M93.9 38.8 A40 40 0 1 0 93.9 81.2" fill="none" stroke="#FAF9F6" stroke-width="15" stroke-linecap="round"/>
+    <circle cx="60" cy="60" r="14" fill="#FF4438"/>
+  </g>
+</svg>

@@ -1,0 +1,1276 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Concap — Conversation capture for trade booths and field sales</title>
+<meta name="description" content="A wearable that captures booth conversations, transcribes them, and pushes the full lead context to HubSpot, Salesforce, and your CRM — before they walk away." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Geist:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root,
+  [data-theme="dark"] {
+    --bg: #0A0A0B;
+    --bg-soft: #111114;
+    --bg-card: #16161A;
+    --bg-card-hover: #1a1a1e;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.14);
+    --ink: #F4F4F0;
+    --ink-dim: rgba(244, 244, 240, 0.62);
+    --ink-faint: rgba(244, 244, 240, 0.38);
+    --accent: #FF5B2E;
+    --accent-soft: rgba(255, 91, 46, 0.12);
+    --accent-glow: rgba(255, 91, 46, 0.18);
+    --ok: #6BD4A1;
+    --ok-soft: rgba(107, 212, 161, 0.1);
+    --device-bg: #F4F0E6;
+    --device-shell: #0E0E10;
+    --device-screen: #000;
+    --nav-bg: rgba(10, 10, 11, 0.72);
+    --grain-blend: overlay;
+    --grain-opacity: 0.35;
+    --hero-glow: 0.6;
+    --serif: 'Fraunces', 'Times New Roman', serif;
+    --sans: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  }
+
+  [data-theme="light"] {
+    --bg: #F6F3EC;
+    --bg-soft: #EFEBE0;
+    --bg-card: #FBF8F1;
+    --bg-card-hover: #FFFCF5;
+    --line: rgba(20, 18, 14, 0.09);
+    --line-strong: rgba(20, 18, 14, 0.16);
+    --ink: #14120E;
+    --ink-dim: rgba(20, 18, 14, 0.66);
+    --ink-faint: rgba(20, 18, 14, 0.42);
+    --accent: #D85A30;
+    --accent-soft: rgba(216, 90, 48, 0.1);
+    --accent-glow: rgba(216, 90, 48, 0.18);
+    --ok: #1D9E75;
+    --ok-soft: rgba(29, 158, 117, 0.1);
+    --device-bg: #EDE7D8;
+    --device-shell: #0E0E10;
+    --device-screen: #000;
+    --nav-bg: rgba(246, 243, 236, 0.78);
+    --grain-blend: multiply;
+    --grain-opacity: 0.18;
+    --hero-glow: 0.5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    transition: background 0.5s ease, color 0.5s ease;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    transition: opacity 0.5s ease;
+  }
+
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 1148px;
+    z-index: 60;
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: navIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background 0.5s ease, border-color 0.5s ease;
+  }
+  @keyframes navIn { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--serif); font-size: 22px; font-weight: 400;
+    letter-spacing: -0.02em; font-style: italic;
+  }
+  .logo-mark {
+    width: 26px; height: 26px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark::before {
+    content: ''; position: absolute; inset: 0;
+    border: 1.5px solid var(--accent); border-radius: 50%;
+  }
+  .logo-mark::after {
+    content: ''; width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
+
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .nav-links { display: flex; gap: 28px; font-size: 13.5px; color: var(--ink-dim); }
+  .nav-links a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
+  .nav-links a:hover { color: var(--ink); }
+
+  .theme-toggle {
+    width: 34px; height: 34px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-dim);
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    padding: 0;
+  }
+  .theme-toggle:hover { border-color: var(--line-strong); color: var(--ink); background: var(--bg-soft); }
+  .theme-toggle svg { width: 16px; height: 16px; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+  .theme-toggle:hover svg { transform: rotate(30deg); }
+  [data-theme="dark"] .icon-sun { display: block; }
+  [data-theme="dark"] .icon-moon { display: none; }
+  [data-theme="light"] .icon-sun { display: none; }
+  [data-theme="light"] .icon-moon { display: block; }
+
+  .nav-cta {
+    background: var(--ink); color: var(--bg);
+    border: none; padding: 9px 16px; border-radius: 8px;
+    font-family: var(--sans); font-size: 13.5px; font-weight: 500;
+    cursor: pointer; transition: transform 0.15s ease, opacity 0.2s;
+  }
+  .nav-cta:hover { transform: translateY(-1px); opacity: 0.92; }
+
+  @media (max-width: 720px) {
+    .nav-links { display: none; }
+  }
+
+  /* ===== HERO ===== */
+  .hero { padding: 180px 0 120px; position: relative; overflow: hidden; }
+  .hero::before {
+    content: '';
+    position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
+    pointer-events: none; opacity: var(--hero-glow);
+    transition: opacity 0.5s ease;
+  }
+
+  .hero-grid {
+    display: grid; grid-template-columns: 1.05fr 1fr;
+    gap: 80px; align-items: center; position: relative;
+  }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink-dim);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 5px 10px; border: 1px solid var(--line); border-radius: 100px;
+    margin-bottom: 28px;
+    animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 8px var(--accent);
+  }
+
+  h1.hero-title {
+    font-family: var(--serif); font-size: clamp(44px, 6vw, 76px);
+    font-weight: 400; line-height: 1.02; letter-spacing: -0.035em;
+    margin-bottom: 28px;
+    animation: fadeUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  }
+  h1.hero-title em { font-style: italic; color: var(--accent); font-weight: 300; }
+  h1.hero-title .strike {
+    position: relative; color: var(--ink-faint);
+    font-style: italic; font-weight: 300;
+  }
+  h1.hero-title .strike::after {
+    content: ''; position: absolute; left: -4%; right: -4%; top: 52%;
+    height: 2px; background: var(--accent);
+    transform: rotate(-2deg); transform-origin: left;
+    animation: strike 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1.4s both;
+  }
+  @keyframes strike { from { transform: rotate(-2deg) scaleX(0); } to { transform: rotate(-2deg) scaleX(1); } }
+
+  .hero-sub {
+    font-size: 18px; line-height: 1.55; color: var(--ink-dim);
+    margin-bottom: 36px; max-width: 520px;
+    animation: fadeUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+  }
+
+  .cta-row {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    animation: fadeUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .btn-primary {
+    background: var(--ink); color: var(--bg);
+    border: none; padding: 14px 22px; border-radius: 10px;
+    font-family: var(--sans); font-size: 15px; font-weight: 500;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); opacity: 0.92; }
+  .btn-primary svg { transition: transform 0.2s ease; }
+  .btn-primary:hover svg { transform: translateX(3px); }
+
+  .btn-ghost {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line-strong); padding: 13px 22px; border-radius: 10px;
+    font-family: var(--sans); font-size: 15px; font-weight: 500;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--ink-faint); background: var(--bg-soft); }
+
+  .trust-line {
+    margin-top: 44px; font-size: 13px; color: var(--ink-faint);
+    font-family: var(--mono); display: flex; align-items: center; gap: 10px;
+    animation: fadeUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+  }
+  .trust-line::before { content: ''; width: 24px; height: 1px; background: var(--ink-faint); }
+
+  /* ===== HERO VISUAL ===== */
+  .hero-visual {
+    position: relative; height: 540px;
+    animation: fadeIn 1.4s ease 0.4s both;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .device-stage {
+    position: absolute; top: 50%; left: 0; transform: translateY(-50%);
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: flex-start;
+  }
+
+  .badge {
+    width: 200px; height: 280px;
+    background: linear-gradient(180deg, #1c1c20 0%, #0e0e10 100%);
+    border: 1px solid var(--line-strong); border-radius: 18px;
+    padding: 22px 18px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-soft);
+    transform: rotate(-3deg); flex-shrink: 0; z-index: 2;
+    color: #F4F4F0;
+  }
+  .badge::before {
+    content: ''; position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 8px; background: #2a2a30;
+    border-radius: 0 0 6px 6px; border-bottom: 1px solid rgba(255, 91, 46, 0.3);
+  }
+  .badge::after {
+    content: ''; position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+    width: 2px; height: 24px;
+    background: linear-gradient(180deg, transparent, rgba(255, 91, 46, 0.4));
+  }
+
+  .badge-top {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; margin-bottom: 18px;
+  }
+  .rec-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em;
+    color: #FF5B2E; text-transform: uppercase;
+  }
+  .rec-dot {
+    width: 7px; height: 7px; background: #FF5B2E; border-radius: 50%;
+    box-shadow: 0 0 8px #FF5B2E; animation: pulse 1.4s ease-in-out infinite;
+  }
+  .battery { font-family: var(--mono); font-size: 9.5px; color: rgba(244,244,240,0.4); }
+
+  .badge-logo {
+    width: 56px; height: 56px; border: 1.5px solid #FF5B2E; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 20px 0; position: relative;
+  }
+  .badge-logo::before, .badge-logo::after {
+    content: ''; position: absolute; inset: 8px;
+    border: 1px solid rgba(255, 91, 46, 0.4); border-radius: 50%;
+    animation: ripple 2.5s ease-out infinite;
+  }
+  .badge-logo::after { animation-delay: 1.25s; }
+  @keyframes ripple {
+    0% { inset: 8px; opacity: 1; }
+    100% { inset: -24px; opacity: 0; }
+  }
+  .badge-logo-inner { font-family: var(--serif); font-size: 22px; font-style: italic; color: #FF5B2E; }
+
+  .badge-name { font-family: var(--serif); font-size: 17px; font-style: italic; margin-top: auto; }
+  .badge-sub {
+    font-family: var(--mono); font-size: 10px; color: rgba(244,244,240,0.4);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px;
+  }
+  .badge-waveform { display: flex; gap: 2px; margin-top: 12px; align-items: flex-end; height: 18px; }
+  .badge-waveform span { width: 2px; background: #FF5B2E; border-radius: 1px; animation: wave 1.2s ease-in-out infinite; }
+  .badge-waveform span:nth-child(1) { height: 40%; animation-delay: 0s; }
+  .badge-waveform span:nth-child(2) { height: 70%; animation-delay: 0.1s; }
+  .badge-waveform span:nth-child(3) { height: 100%; animation-delay: 0.2s; }
+  .badge-waveform span:nth-child(4) { height: 60%; animation-delay: 0.3s; }
+  .badge-waveform span:nth-child(5) { height: 85%; animation-delay: 0.4s; }
+  .badge-waveform span:nth-child(6) { height: 45%; animation-delay: 0.5s; }
+  .badge-waveform span:nth-child(7) { height: 75%; animation-delay: 0.6s; }
+  .badge-waveform span:nth-child(8) { height: 55%; animation-delay: 0.7s; }
+  @keyframes wave { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+
+  .flow-line {
+    position: absolute; top: 50%; left: 200px;
+    width: 90px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+    background-size: 200% 100%;
+    animation: flow 2.5s linear infinite;
+    z-index: 1;
+  }
+  @keyframes flow { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+  .crm-card {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 20px; width: 320px;
+    position: absolute; right: -10px; top: 50%;
+    transform: translateY(-50%) rotate(2deg);
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.4); z-index: 2;
+    transition: background 0.5s ease, border-color 0.5s ease;
+  }
+  .crm-header {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px;
+  }
+  .crm-logo {
+    width: 24px; height: 24px; background: #FF7A59; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: #fff;
+  }
+  .crm-title { font-size: 13px; font-weight: 500; }
+  .crm-time { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-left: auto; }
+
+  .crm-row {
+    display: flex; justify-content: space-between;
+    font-size: 12.5px; padding: 6px 0;
+    opacity: 0; animation: rowIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .crm-row:nth-child(2) { animation-delay: 1.2s; }
+  .crm-row:nth-child(3) { animation-delay: 1.4s; }
+  .crm-row:nth-child(4) { animation-delay: 1.6s; }
+  .crm-row:nth-child(5) { animation-delay: 1.8s; }
+  .crm-row:nth-child(6) { animation-delay: 2.0s; }
+  @keyframes rowIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+  .crm-row .key { color: var(--ink-faint); font-family: var(--mono); font-size: 11px; }
+  .crm-row .val { font-weight: 500; max-width: 60%; text-align: right; }
+  .crm-row .val.accent { color: var(--accent); }
+  .crm-pill {
+    background: var(--accent-soft); color: var(--accent);
+    font-family: var(--mono); font-size: 9.5px;
+    padding: 3px 8px; border-radius: 100px; margin-left: auto;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  .transcript-bubble {
+    position: absolute; top: 12%; right: 5%;
+    background: var(--bg-card); backdrop-filter: blur(12px);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; max-width: 260px;
+    font-family: var(--serif); font-style: italic;
+    font-size: 13px; line-height: 1.4; color: var(--ink-dim);
+    z-index: 3;
+    animation: bubbleIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
+    transition: background 0.5s ease, border-color 0.5s ease;
+  }
+  @keyframes bubbleIn { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .transcript-bubble::before {
+    content: '"'; font-family: var(--serif); font-size: 40px;
+    color: var(--accent); line-height: 0.3; margin-right: 4px; vertical-align: -8px;
+  }
+  .transcript-meta {
+    font-family: var(--mono); font-style: normal; font-size: 10px;
+    color: var(--ink-faint); letter-spacing: 0.05em; text-transform: uppercase;
+    margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 960px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 60px; }
+    .hero-visual { height: 480px; }
+    .crm-card { width: 280px; right: 0; }
+    .transcript-bubble { right: auto; left: 0; }
+  }
+
+  /* ===== MARQUEE ===== */
+  .marquee {
+    padding: 40px 0; border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line); overflow: hidden; position: relative;
+    transition: border-color 0.5s ease;
+  }
+  .marquee-label {
+    text-align: center; font-family: var(--mono); font-size: 11px;
+    color: var(--ink-faint); text-transform: uppercase;
+    letter-spacing: 0.15em; margin-bottom: 24px;
+  }
+  .marquee-track {
+    display: flex; gap: 64px;
+    animation: marquee 30s linear infinite;
+    white-space: nowrap; align-items: center;
+  }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-item {
+    font-family: var(--serif); font-size: 22px; font-style: italic;
+    color: var(--ink-dim); letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .marquee-item::after {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--ink-faint); margin-left: 64px;
+  }
+
+  /* ===== SECTIONS ===== */
+  section { padding: 120px 0; position: relative; }
+  .section-label {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 24px;
+  }
+  .section-label::before { content: ''; width: 32px; height: 1px; background: var(--accent); }
+  .section-label .num { color: var(--accent); font-weight: 500; }
+  h2.section-title {
+    font-family: var(--serif); font-size: clamp(34px, 4.5vw, 56px);
+    font-weight: 400; line-height: 1.05; letter-spacing: -0.025em;
+    margin-bottom: 28px; max-width: 720px;
+  }
+  h2.section-title em { font-style: italic; color: var(--accent); }
+  .section-sub {
+    font-size: 17px; line-height: 1.55; color: var(--ink-dim);
+    max-width: 580px; margin-bottom: 60px;
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(28px);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ===== PROBLEM ===== */
+  .problem { background: linear-gradient(180deg, transparent, var(--accent-soft) 50%, transparent); }
+  .problem-grid {
+    display: grid; grid-template-columns: 1.4fr 1fr;
+    gap: 60px; align-items: start;
+  }
+  .problem-text { font-size: 19px; line-height: 1.7; color: var(--ink-dim); }
+  .problem-text em {
+    font-family: var(--serif); font-style: italic;
+    color: var(--ink); font-size: 1.05em;
+  }
+  .stat-box {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 36px 32px;
+    position: relative; overflow: hidden;
+    transition: background 0.5s ease, border-color 0.5s ease;
+  }
+  .stat-box::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%; background: var(--accent);
+  }
+  .stat-num {
+    font-family: var(--serif); font-size: 96px; font-weight: 300;
+    line-height: 0.9; letter-spacing: -0.04em;
+    color: var(--accent); margin-bottom: 16px;
+  }
+  .stat-label { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+  @media (max-width: 860px) { .problem-grid { grid-template-columns: 1fr; } }
+
+  /* ===== HARDWARE ===== */
+  .hardware-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; margin-top: 20px;
+  }
+  .device-card {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 20px; padding: 32px;
+    transition: border-color 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.5s ease;
+    position: relative;
+  }
+  .device-card:hover { transform: translateY(-4px); border-color: var(--line-strong); }
+  .device-tag {
+    display: inline-flex; align-items: center;
+    background: var(--ink); color: var(--bg);
+    font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+    padding: 5px 12px; border-radius: 100px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .device-card.backup .device-tag { background: var(--bg-soft); color: var(--ink-dim); }
+  .device-name {
+    font-family: var(--serif); font-size: 38px; font-weight: 400;
+    letter-spacing: -0.02em; margin-bottom: 12px; line-height: 1;
+  }
+  .device-name em { font-style: italic; color: var(--accent); }
+  .device-desc {
+    font-size: 15.5px; line-height: 1.5;
+    color: var(--ink-dim); margin-bottom: 24px; max-width: 380px;
+  }
+  .device-stage-card {
+    background: var(--device-bg); border-radius: 14px;
+    padding: 36px 20px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 240px;
+    transition: background 0.5s ease;
+  }
+  .device-specs {
+    border-top: 1px dashed var(--line-strong);
+    padding-top: 20px;
+    font-family: var(--mono); font-size: 13.5px;
+    line-height: 1.7; color: var(--ink-dim);
+  }
+  .device-specs .spec-key { color: var(--ink); font-weight: 500; }
+  @media (max-width: 760px) { .hardware-grid { grid-template-columns: 1fr; } }
+
+  /* SVG device animations */
+  .clip-svg .clip-rec { animation: pulse 1.4s ease-in-out infinite; }
+  .clip-svg .clip-wave1 { animation: clip-wave-pulse 2s ease-in-out infinite; }
+  .clip-svg .clip-wave2 { animation: clip-wave-pulse 2s ease-in-out 0.3s infinite; }
+  @keyframes clip-wave-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+  .puck-svg .puck-led { animation: puck-led-pulse 2s ease-in-out infinite; }
+  @keyframes puck-led-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; filter: drop-shadow(0 0 6px #FF5B2E); }
+  }
+
+  /* ===== HOW IT WORKS ===== */
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 24px; margin-top: 20px;
+  }
+  .step {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 32px 28px; position: relative;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, background 0.3s;
+    overflow: hidden;
+  }
+  .step::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 0; height: 1px; background: var(--accent);
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .step:hover { transform: translateY(-4px); border-color: var(--line-strong); background: var(--bg-card-hover); }
+  .step:hover::after { width: 100%; }
+  .step-num {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.1em; margin-bottom: 28px;
+  }
+  .step-icon {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px; color: var(--ink);
+  }
+  .step-icon svg { width: 28px; height: 28px; }
+  h3.step-title {
+    font-family: var(--serif); font-size: 24px; font-weight: 400;
+    letter-spacing: -0.015em; margin-bottom: 12px; line-height: 1.2;
+  }
+  .step-desc { font-size: 14.5px; color: var(--ink-dim); line-height: 1.55; }
+  @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+
+  /* ===== COMPARISON ===== */
+  .compare {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; margin-top: 20px;
+  }
+  .compare-col {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 36px 32px; position: relative;
+    transition: background 0.5s ease, border-color 0.5s ease;
+  }
+  .compare-col.good { border-color: var(--ok-soft); background: linear-gradient(180deg, var(--ok-soft), var(--bg-card)); }
+  .compare-col.bad { border-color: var(--accent-soft); }
+  .compare-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 28px; padding: 5px 10px; border-radius: 100px;
+  }
+  .compare-col.bad .compare-tag { background: var(--accent-soft); color: var(--accent); }
+  .compare-col.good .compare-tag { background: var(--ok-soft); color: var(--ok); }
+  .compare-list { list-style: none; }
+  .compare-list li {
+    display: flex; align-items: flex-start; gap: 14px;
+    font-size: 15.5px; line-height: 1.5;
+    padding: 14px 0; border-top: 1px solid var(--line); color: var(--ink-dim);
+  }
+  .compare-list li:first-child { border-top: none; padding-top: 0; }
+  .compare-list .mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .compare-col.bad .mark { background: var(--accent-soft); color: var(--accent); }
+  .compare-col.good .mark { background: var(--ok-soft); color: var(--ok); }
+  .compare-list strong {
+    font-weight: 500; color: var(--ink);
+    font-family: var(--serif); font-style: italic; font-size: 1.05em;
+  }
+  @media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
+
+  /* ===== INTEGRATIONS ===== */
+  .integrations-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-top: 20px;
+  }
+  .integration {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 24px 20px;
+    text-align: left; font-size: 15px; font-weight: 500;
+    transition: border-color 0.2s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s;
+    cursor: default;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .integration:hover { border-color: var(--line-strong); transform: translateY(-3px); background: var(--bg-card-hover); }
+  .integration-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 14px; font-weight: 500;
+  }
+  .integration[data-color="orange"] .integration-icon { background: rgba(255, 122, 89, 0.14); color: #FF7A59; }
+  .integration[data-color="blue"] .integration-icon { background: rgba(0, 161, 224, 0.14); color: #00A1E0; }
+  .integration[data-color="green"] .integration-icon { background: rgba(99, 153, 34, 0.14); color: #639922; }
+  .integration[data-color="purple"] .integration-icon { background: rgba(127, 119, 221, 0.14); color: #7F77DD; }
+  .integration[data-color="red"] .integration-icon { background: rgba(226, 75, 74, 0.14); color: #E24B4A; }
+  .integration[data-color="yellow"] .integration-icon { background: rgba(186, 117, 23, 0.14); color: #BA7517; }
+  .integration[data-color="aqua"] .integration-icon { background: rgba(15, 110, 86, 0.14); color: #0F6E56; }
+  .integration[data-color="grey"] .integration-icon { background: var(--bg-soft); color: var(--ink-dim); }
+  @media (max-width: 760px) { .integrations-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ===== USE CASES ===== */
+  .usecases {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-top: 20px;
+  }
+  .usecase {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 28px 24px;
+    transition: border-color 0.3s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.5s ease;
+    position: relative; overflow: hidden;
+    min-height: 200px; display: flex; flex-direction: column;
+  }
+  .usecase:hover { border-color: var(--line-strong); transform: translateY(-3px); }
+  .usecase-icon { margin-bottom: 20px; color: var(--accent); }
+  .usecase-icon svg { width: 24px; height: 24px; }
+  .usecase-title {
+    font-family: var(--serif); font-size: 20px; font-weight: 400;
+    letter-spacing: -0.01em; margin-bottom: 10px;
+  }
+  .usecase-desc { font-size: 13.5px; color: var(--ink-dim); line-height: 1.5; margin-top: auto; }
+  @media (max-width: 860px) { .usecases { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .usecases { grid-template-columns: 1fr; } }
+
+  /* ===== PRIVACY ===== */
+  .privacy-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-top: 20px;
+  }
+  .privacy-item {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 24px 26px;
+    display: flex; gap: 18px; align-items: flex-start;
+    transition: border-color 0.2s, background 0.5s ease;
+  }
+  .privacy-item:hover { border-color: var(--line-strong); }
+  .privacy-check {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: var(--ok-soft); color: var(--ok);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .privacy-text { font-size: 14.5px; color: var(--ink-dim); line-height: 1.55; }
+  .privacy-text strong {
+    color: var(--ink); font-weight: 500; display: block;
+    margin-bottom: 4px; font-family: var(--serif);
+    font-size: 16px; font-style: italic;
+  }
+  @media (max-width: 760px) { .privacy-grid { grid-template-columns: 1fr; } }
+
+  /* ===== OBJECTION ===== */
+  .objection {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: 20px; padding: 60px 56px;
+    position: relative; margin-top: 20px; overflow: hidden;
+    transition: background 0.5s ease, border-color 0.5s ease;
+  }
+  .objection::before {
+    content: '"'; position: absolute; top: -30px; left: 32px;
+    font-family: var(--serif); font-size: 200px;
+    color: var(--accent-soft); line-height: 1;
+  }
+  .objection-q {
+    font-family: var(--serif); font-size: clamp(28px, 3.5vw, 40px);
+    font-weight: 400; font-style: italic; line-height: 1.15;
+    letter-spacing: -0.02em; margin-bottom: 28px;
+    position: relative; z-index: 1; max-width: 720px;
+  }
+  .objection-a {
+    font-size: 17px; line-height: 1.6; color: var(--ink-dim);
+    max-width: 680px; position: relative; z-index: 1;
+  }
+  .objection-a em { color: var(--ink); font-family: var(--serif); font-style: italic; }
+  @media (max-width: 600px) { .objection { padding: 44px 28px; } }
+
+  /* ===== FINAL CTA ===== */
+  .final-cta {
+    margin: 60px 0 0; padding: 100px 0;
+    background: linear-gradient(180deg, var(--accent) 0%, #C44A1F 100%);
+    color: #1A0700; text-align: center;
+    border-radius: 24px; position: relative; overflow: hidden;
+  }
+  .final-cta::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .final-eyebrow {
+    font-family: var(--mono); font-size: 12px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(26, 7, 0, 0.6); margin-bottom: 20px;
+  }
+  .final-title {
+    font-family: var(--serif); font-size: clamp(40px, 5.5vw, 68px);
+    font-weight: 400; line-height: 1.05; letter-spacing: -0.03em;
+    margin-bottom: 16px; max-width: 800px;
+    margin-left: auto; margin-right: auto; color: #1A0700;
+  }
+  .final-title em { font-style: italic; }
+  .final-sub {
+    font-size: 18px; color: rgba(26, 7, 0, 0.7);
+    margin-bottom: 44px; max-width: 540px;
+    margin-left: auto; margin-right: auto;
+  }
+  .final-cta .cta-row { justify-content: center; }
+  .final-cta .btn-primary { background: #1A0700; color: var(--accent); }
+  .final-cta .btn-primary:hover { background: #000; opacity: 1; }
+  .final-cta .btn-ghost {
+    color: #1A0700; border-color: rgba(26, 7, 0, 0.3);
+  }
+  .final-cta .btn-ghost:hover {
+    border-color: rgba(26, 7, 0, 0.5); background: rgba(26, 7, 0, 0.04);
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 80px 0 60px;
+    border-top: 1px solid var(--line); margin-top: 80px;
+  }
+  .footer-grid {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 48px; margin-bottom: 60px;
+  }
+  .footer-tagline {
+    font-family: var(--serif); font-size: 22px;
+    font-style: italic; color: var(--ink-dim);
+    line-height: 1.4; margin-top: 20px; max-width: 320px;
+  }
+  .footer-col h4 {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 18px; font-weight: 500;
+  }
+  .footer-col a {
+    display: block; color: var(--ink-dim); text-decoration: none;
+    font-size: 14px; margin-bottom: 12px; transition: color 0.2s;
+  }
+  .footer-col a:hover { color: var(--ink); }
+  .footer-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 32px; border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; color: var(--ink-faint);
+  }
+  @media (max-width: 760px) {
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .footer-bottom { flex-direction: column; gap: 16px; }
+  }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-mark"></div>
+    Concap
+  </div>
+  <div class="nav-right">
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#hardware">Hardware</a>
+      <a href="#integrations">Integrations</a>
+      <a href="#privacy">Privacy</a>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+    <button class="nav-cta">Book a demo</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          Conversation capture for field sales
+        </div>
+        <h1 class="hero-title">
+          Every booth conversation. Captured, transcribed, and in your CRM — <em>before they walk away.</em>
+        </h1>
+        <p class="hero-sub">
+          A wearable that records your booth conversations, transcribes them, extracts the lead, and pushes the full context to HubSpot, Salesforce, or whatever CRM you live in. Stop scribbling on business cards. Stop forgetting the part of the conversation that actually mattered.
+        </p>
+        <div class="cta-row">
+          <button class="btn-primary">
+            Book a 10-min demo
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+          <button class="btn-ghost">See how it works</button>
+        </div>
+        <div class="trust-line">Built for SDRs, AEs, and founders working booths, dinners, and field events</div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="device-stage">
+          <div class="badge">
+            <div class="badge-top">
+              <span class="rec-pill"><span class="rec-dot"></span>REC</span>
+              <span class="battery">94%</span>
+            </div>
+            <div class="badge-logo">
+              <span class="badge-logo-inner">c</span>
+            </div>
+            <div class="badge-waveform">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="badge-name">Concap</div>
+            <div class="badge-sub">booth badge · v1</div>
+          </div>
+          <div class="flow-line"></div>
+          <div class="crm-card">
+            <div class="crm-header">
+              <div class="crm-logo">H</div>
+              <div class="crm-title">HubSpot · new lead</div>
+              <span class="crm-pill">live</span>
+            </div>
+            <div class="crm-row"><span class="key">name</span><span class="val">Maya Rodriguez</span></div>
+            <div class="crm-row"><span class="key">company</span><span class="val">Northwind Logistics</span></div>
+            <div class="crm-row"><span class="key">role</span><span class="val">VP, Engineering</span></div>
+            <div class="crm-row"><span class="key">pain</span><span class="val accent">switching ERP in Q2</span></div>
+            <div class="crm-row"><span class="key">next step</span><span class="val">follow up Tue</span></div>
+          </div>
+        </div>
+        <div class="transcript-bubble">
+          we're locked into NetSuite till Q2, then it's wide open
+          <div class="transcript-meta">00:14 · MAYA · captured 12s ago</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="marquee">
+  <div class="marquee-label">Built for the show floor</div>
+  <div class="marquee-track">
+    <span class="marquee-item">SaaStr</span>
+    <span class="marquee-item">Dreamforce</span>
+    <span class="marquee-item">HubSpot INBOUND</span>
+    <span class="marquee-item">RSA Conference</span>
+    <span class="marquee-item">Web Summit</span>
+    <span class="marquee-item">CES</span>
+    <span class="marquee-item">Money 20/20</span>
+    <span class="marquee-item">SaaStr</span>
+    <span class="marquee-item">Dreamforce</span>
+    <span class="marquee-item">HubSpot INBOUND</span>
+    <span class="marquee-item">RSA Conference</span>
+    <span class="marquee-item">Web Summit</span>
+    <span class="marquee-item">CES</span>
+    <span class="marquee-item">Money 20/20</span>
+  </div>
+</div>
+
+<section class="problem">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">01</span> The problem</div>
+      <h2 class="section-title">You spent $80,000 on a booth. You'll forget most of what got said by <em>Tuesday.</em></h2>
+    </div>
+    <div class="problem-grid reveal">
+      <div class="problem-text">
+        Three days on the floor. 400 conversations. A pile of business cards, a half-filled scanner app, and a Slack thread full of <em>"remember to follow up with the guy from the Series B fintech."</em>
+        <br><br>
+        By the time you sit down to log leads, you remember names. Maybe titles. Almost never the specifics — what they're trying to solve, who their current vendor is, what they said about budget timing, the casual mention that they're switching ERPs in Q2.
+        <br><br>
+        That context <em>is the lead.</em> And it's gone.
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">70%</div>
+        <div class="stat-label">of conversation context is lost by the next business day — the part that actually qualifies the lead</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="hardware">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">02</span> The hardware</div>
+      <h2 class="section-title">Two devices. <em>One job.</em> Capture the conversation, no matter where you are.</h2>
+      <p class="section-sub">Pick the form factor that fits the moment. The Clip rides on your lanyard for the show floor. The Puck slips into a pocket for dinners, hallways, and anywhere a badge would feel weird.</p>
+    </div>
+    <div class="hardware-grid reveal">
+      <div class="device-card">
+        <div class="device-tag">Primary</div>
+        <div class="device-name">The <em>Clip</em></div>
+        <div class="device-desc">Small rectangular recorder with a screen. Has a wired remote that controls menus.</div>
+        <div class="device-stage-card">
+          <svg class="clip-svg" width="160" height="200" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="clipShell" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#1c1c20"/>
+                <stop offset="1" stop-color="#0a0a0c"/>
+              </linearGradient>
+              <linearGradient id="clipScreen" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#0a0a0c"/>
+                <stop offset="1" stop-color="#000"/>
+              </linearGradient>
+            </defs>
+            <rect x="20" y="8" width="100" height="184" rx="46" fill="url(#clipShell)" stroke="#2a2a30" stroke-width="0.5"/>
+            <rect x="120" y="58" width="4" height="18" rx="2" fill="#2a2a30"/>
+            <rect x="120" y="82" width="4" height="12" rx="2" fill="#2a2a30"/>
+            <rect x="62" y="184" width="16" height="3" rx="1" fill="#2a2a30"/>
+            <rect x="32" y="28" width="76" height="140" rx="10" fill="url(#clipScreen)" stroke="#1a1a1e" stroke-width="0.5"/>
+            <text x="70" y="50" font-family="JetBrains Mono, monospace" font-size="9" font-weight="500" fill="#FF5B2E" text-anchor="middle" letter-spacing="1.5" class="clip-rec">REC</text>
+            <text x="70" y="78" font-family="JetBrains Mono, monospace" font-size="10" fill="#F4F4F0" text-anchor="middle" letter-spacing="0.5">00:00:42</text>
+            <rect x="42" y="92" width="56" height="2" rx="1" fill="#FF5B2E" class="clip-wave1"/>
+            <rect x="46" y="100" width="48" height="2" rx="1" fill="#FF5B2E" opacity="0.7" class="clip-wave2"/>
+            <text x="70" y="148" font-family="Fraunces, serif" font-style="italic" font-size="9" fill="#F4F4F0" text-anchor="middle" opacity="0.7">REC.001</text>
+          </svg>
+        </div>
+        <div class="device-specs">
+          <div><span class="spec-key">Storage</span> · 16 GB internal</div>
+          <div><span class="spec-key">Battery</span> · ~10+ hrs</div>
+          <div><span class="spec-key">Screen</span> · Yes — shows timer</div>
+          <div><span class="spec-key">Quirk</span> · Record button only works when wired remote is unplugged</div>
+        </div>
+      </div>
+
+      <div class="device-card backup">
+        <div class="device-tag">Backup</div>
+        <div class="device-name">The <em>Puck</em></div>
+        <div class="device-desc">Small round recorder, no screen. Slider switch on the side: ON / OFF / RESET.</div>
+        <div class="device-stage-card">
+          <svg class="puck-svg" width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="puckShell" cx="0.35" cy="0.3" r="0.9">
+                <stop offset="0" stop-color="#2a2a30"/>
+                <stop offset="0.4" stop-color="#1a1a1e"/>
+                <stop offset="1" stop-color="#0a0a0c"/>
+              </radialGradient>
+              <radialGradient id="puckTop" cx="0.4" cy="0.35" r="0.7">
+                <stop offset="0" stop-color="#1a1a1e"/>
+                <stop offset="1" stop-color="#0a0a0c"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="100" cy="116" rx="68" ry="58" fill="url(#puckShell)"/>
+            <ellipse cx="100" cy="106" rx="68" ry="58" fill="url(#puckTop)" stroke="#2a2a30" stroke-width="0.5"/>
+            <ellipse cx="100" cy="106" rx="58" ry="48" fill="none" stroke="#1a1a1e" stroke-width="0.5"/>
+            <circle cx="100" cy="106" r="8" fill="#000" stroke="#2a2a30" stroke-width="0.5"/>
+            <circle cx="100" cy="106" r="3" fill="#1a1a1e"/>
+            <rect x="160" y="100" width="14" height="22" rx="2" fill="#0a0a0c" stroke="#2a2a30" stroke-width="0.5"/>
+            <rect x="163" y="104" width="8" height="4" rx="1" fill="#2a2a30"/>
+            <rect x="163" y="110" width="8" height="4" rx="1" fill="#2a2a30"/>
+            <rect x="163" y="116" width="8" height="4" rx="1" fill="#2a2a30"/>
+            <circle cx="135" cy="92" r="2.5" fill="#FF5B2E" class="puck-led"/>
+            <ellipse cx="100" cy="170" rx="40" ry="6" fill="#000" opacity="0.25"/>
+          </svg>
+        </div>
+        <div class="device-specs">
+          <div><span class="spec-key">Storage</span> · 128 GB internal</div>
+          <div><span class="spec-key">Battery</span> · ~30+ hrs</div>
+          <div><span class="spec-key">Screen</span> · None — LED only</div>
+          <div><span class="spec-key">Quirk</span> · Auto-saves every 2 hrs so a crash never loses everything</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">03</span> How it works</div>
+      <h2 class="section-title">Wear it. Talk normally. The lead lands in your CRM with <em>full context.</em></h2>
+      <p class="section-sub">Three steps. No notetaker pretending to be a salesperson. No tab-switching while you should be listening.</p>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">01 / hardware</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="6" x2="13" y2="6"></line><circle cx="12" cy="14" r="3"></circle></svg>
+        </div>
+        <h3 class="step-title">Wear the device</h3>
+        <p class="step-desc">Clip it to your lanyard or pocket it. Conference-friendly. Visible consent indicator. Full booth day on a single charge.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02 / intelligence</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2l2-7 4 14 4-10 2 3h4"></path></svg>
+        </div>
+        <h3 class="step-title">We transcribe and extract</h3>
+        <p class="step-desc">On-device transcription with speaker separation. The model pulls lead, pain points, objections, and next steps — automatically.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03 / delivery</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+        </div>
+        <h3 class="step-title">Lands in your CRM</h3>
+        <p class="step-desc">Full transcript, structured fields, suggested follow-up, and the 30-second clip where they said the thing that matters.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">04</span> Why now</div>
+      <h2 class="section-title">The four ways teams handle this today are <em>all broken.</em></h2>
+    </div>
+    <div class="compare reveal">
+      <div class="compare-col bad">
+        <div class="compare-tag">Today's playbook</div>
+        <ul class="compare-list">
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div><div><strong>Badge scanners</strong> capture identity. Not context. You leave with a name and zero memory of why they mattered.</div></li>
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div><div><strong>End-of-day CRM entry</strong> loses 60-80% of detail. You're tired. You're hungry. You're guessing.</div></li>
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div><div><strong>Phone voice memos</strong> require you to step away from the booth. You won't. And nobody transcribes them.</div></li>
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div><div><strong>Hiring notetakers</strong> doesn't scale and creates a weird vibe at your booth.</div></li>
+        </ul>
+      </div>
+      <div class="compare-col good">
+        <div class="compare-tag">With Concap</div>
+        <ul class="compare-list">
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div><strong>Captures the conversation</strong> as it actually happens. The exact words. The exact context.</div></li>
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div><strong>Lead enriched and in CRM</strong> before they've walked out of the booth. Follow-up suggested. Clip attached.</div></li>
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div><strong>Stays in flow with the prospect.</strong> No phone-out moment. No interruption. You're a salesperson, not a typist.</div></li>
+          <li><div class="mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div><div><strong>One device per rep.</strong> Scales linearly with your team. No retraining. No weird booth dynamics.</div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="integrations">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">05</span> Integrations</div>
+      <h2 class="section-title">Connects to the tools you <em>already pay for.</em></h2>
+      <p class="section-sub">Native integrations with the major CRMs and sales platforms. Webhook for everything else. Slack pings when a high-intent lead lands.</p>
+    </div>
+    <div class="integrations-grid reveal">
+      <div class="integration" data-color="orange"><div class="integration-icon">H</div>HubSpot</div>
+      <div class="integration" data-color="blue"><div class="integration-icon">S</div>Salesforce</div>
+      <div class="integration" data-color="green"><div class="integration-icon">P</div>Pipedrive</div>
+      <div class="integration" data-color="purple"><div class="integration-icon">A</div>Attio</div>
+      <div class="integration" data-color="red"><div class="integration-icon">C</div>Close</div>
+      <div class="integration" data-color="yellow"><div class="integration-icon">O</div>Outreach</div>
+      <div class="integration" data-color="aqua"><div class="integration-icon">#</div>Slack</div>
+      <div class="integration" data-color="grey"><div class="integration-icon">{}</div>Webhook</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">06</span> Use cases</div>
+      <h2 class="section-title">Wherever you have high-value conversations you <em>can't afford to forget.</em></h2>
+    </div>
+    <div class="usecases reveal">
+      <div class="usecase">
+        <div class="usecase-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"></path><path d="M5 9v11h14V9"></path><path d="M9 22V12h6v10"></path></svg>
+        </div>
+        <div class="usecase-title">Trade show booths</div>
+        <div class="usecase-desc">Capture every conversation across a 3-day conference. Never lose a warm intro to fatigue.</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+        </div>
+        <div class="usecase-title">Field sales meetings</div>
+        <div class="usecase-desc">Walk into the client's office, walk out with the meeting already logged.</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-2 8H10z"></path><line x1="12" y1="10" x2="12" y2="20"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+        </div>
+        <div class="usecase-title">Founder dinners</div>
+        <div class="usecase-desc">That one investor conversation? Captured. Indexed. Searchable forever.</div>
+      </div>
+      <div class="usecase">
+        <div class="usecase-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="13" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line></svg>
+        </div>
+        <div class="usecase-title">Customer interviews</div>
+        <div class="usecase-desc">PMs and researchers get clean transcripts without a notetaker in the room.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">07</span> Privacy and consent</div>
+      <h2 class="section-title">Built consent-first. <em>Compliant by default.</em></h2>
+      <p class="section-sub">We did the legal work so your team doesn't have to. People know they're being recorded. Your data stays yours.</p>
+    </div>
+    <div class="privacy-grid reveal">
+      <div class="privacy-item">
+        <div class="privacy-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        <div class="privacy-text"><strong>Visible recording indicator</strong>Consent is obvious, not buried. The device shows a pulsing dot whenever recording is active.</div>
+      </div>
+      <div class="privacy-item">
+        <div class="privacy-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        <div class="privacy-text"><strong>Configurable consent flows</strong>Verbal acknowledgment, signage templates, or opt-in workflows depending on your jurisdiction.</div>
+      </div>
+      <div class="privacy-item">
+        <div class="privacy-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        <div class="privacy-text"><strong>GDPR and CCPA compliant</strong>Two-party consent state handling for the US. SOC 2 Type II in progress.</div>
+      </div>
+      <div class="privacy-item">
+        <div class="privacy-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        <div class="privacy-text"><strong>Encrypted, deletable, yours</strong>Audio encrypted in transit and at rest. Configurable retention. Per-contact deletion on request.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="num">08</span> The honest answer</div>
+    </div>
+    <div class="objection reveal">
+      <div class="objection-q">Can't we just use Otter, Fireflies, or Gong?</div>
+      <div class="objection-a">Those tools record Zoom calls. Concap records <em>the physical world</em> — booths, hallways, coffee meetings, the back of the Uber. The places where the real deals start. We're not a meeting bot. We're a hardware-first capture layer for everywhere you can't put one.</div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="final-cta reveal" id="pricing">
+    <div class="final-eyebrow">Your next trade show is in 6 weeks</div>
+    <h2 class="final-title">Don't show up with a stack of <em>business cards.</em></h2>
+    <p class="final-sub">Pilot one event before you commit. Hardware lease plus per-seat software. Volume discount for event teams.</p>
+    <div class="cta-row">
+      <button class="btn-primary">
+        Book a demo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+      <button class="btn-ghost">Reserve a pilot unit</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="logo" style="font-size: 26px;">
+          <div class="logo-mark"></div>
+          Concap
+        </div>
+        <div class="footer-tagline">Built by people who've worked too many booths.</div>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#how">How it works</a>
+        <a href="#hardware">Hardware</a>
+        <a href="#integrations">Integrations</a>
+        <a href="#privacy">Privacy</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Privacy policy</a>
+        <a href="#">Terms</a>
+        <a href="#">DPA</a>
+        <a href="#">Security</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Concap, Inc.</span>
+      <span>Concap — because the conversation is the lead.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Theme toggle with localStorage persistence
+  const root = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const stored = localStorage.getItem('concap-theme');
+  if (stored) root.setAttribute('data-theme', stored);
+  toggle.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('concap-theme', next);
+  });
+</script>
+</body>
+</html>
+--
