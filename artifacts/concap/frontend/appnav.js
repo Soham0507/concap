@@ -360,9 +360,22 @@
     refreshToggles(savedTheme());
   }
 
+  // Load the floating assistant widget on every page that loads appnav.js
+  // (i.e. every authenticated/sidebar page) without having to add a <script>
+  // tag to each HTML file by hand.
+  function loadChatbot() {
+    if (document.getElementById("cbw-script")) return;
+    var script = document.createElement("script");
+    script.id = "cbw-script";
+    script.src = "/static/chatbot.js";
+    document.body.appendChild(script);
+  }
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", build);
+    document.addEventListener("DOMContentLoaded", loadChatbot);
   } else {
     build();
+    loadChatbot();
   }
 })();

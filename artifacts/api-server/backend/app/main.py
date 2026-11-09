@@ -13,7 +13,7 @@ from .config import get_settings
 from .database import init_db
 from fastapi import Depends
 
-from .routers import all_meetings, auth, branding, brands, captures, companies, consent, conversations, events, hubspot, imported_meetings, meetings, org, plaud, privacy, quotes, salesforce, scan, search, sessions, transcribe, visitors, voice_profile
+from .routers import all_meetings, auth, branding, brands, captures, chatbot, companies, consent, conversations, events, hubspot, imported_meetings, meetings, org, plaud, privacy, quotes, salesforce, scan, search, sessions, transcribe, visitors, voice_profile
 from .routers.auth import require_user
 
 logger = logging.getLogger("booth")
@@ -221,6 +221,7 @@ app.include_router(brands.router, dependencies=_protected)
 app.include_router(privacy.router, dependencies=_protected)
 app.include_router(quotes.router, dependencies=_protected)
 app.include_router(voice_profile.router, dependencies=_protected)
+app.include_router(chatbot.router, dependencies=_protected)
 
 
 # The website owns the original static files in its separate web artifact.
